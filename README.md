@@ -4,12 +4,12 @@ Trajectories and phase space of the classical kicked top. The computation is in 
 
 ## Model
 
-A unit vector \((X, Y, Z)\) on the sphere. One kick (Haake convention):
+A unit vector $(X, Y, Z)$ on the sphere. One kick (Haake convention):
 
-1. rotation about \(y\) by \(p\):  \(X' = X\cos p + Z\sin p,\ Y' = Y,\ Z' = -X\sin p + Z\cos p\)
-2. torsion about \(z\) by \(kZ'\): \(X'' = X'\cos kZ' - Y'\sin kZ',\ Y'' = X'\sin kZ' + Y'\cos kZ',\ Z'' = Z'\)
+1. rotation about $y$ by $p$:  $X' = X\cos p + Z\sin p,\ Y' = Y,\ Z' = -X\sin p + Z\cos p$
+2. torsion about $z$ by $kZ'$: $X'' = X'\cos kZ' - Y'\sin kZ',\ Y'' = X'\sin kZ' + Y'\cos kZ',\ Z'' = Z'$
 
-Phase space is shown in the canonical (area-preserving) coordinates \((\phi, Z = \cos\theta)\).
+Phase space is shown in the canonical (area-preserving) coordinates $(\phi, Z = \cos\theta)$.
 
 ## Layout
 
@@ -49,7 +49,7 @@ Python needs `numpy` and `matplotlib`.
 | | `save_every` | store every `save_every`-th kick |
 | `&initial` | `mode` | `'single'`, `'grid'` or `'random'` |
 | | `theta0`, `phi0` | single initial point (radians) |
-| | `n_theta`, `n_phi` | grid size, uniform in \(Z=\cos\theta\) and \(\phi\) |
+| | `n_theta`, `n_phi` | grid size, uniform in $Z=\cos\theta$ and $\phi$ |
 | | `n_random`, `seed` | random points, uniform on the sphere |
 | `&output` | `out_dir` | output directory |
 
@@ -58,4 +58,4 @@ Python needs `numpy` and `matplotlib`.
 ASCII, one block per initial condition separated by a blank line; first line is a `# p = ..., k = ...` header.
 
 - `trajectory.dat`: `ic n X Y Z`
-- `phase_space.dat`: `ic n phi Z`, with \(\phi \in (-\pi, \pi]\)
+- `phase_space.dat`: `ic n phi Z`, with $\phi \in (-\pi, \pi]$
