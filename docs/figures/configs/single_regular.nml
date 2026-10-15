@@ -1,0 +1,19 @@
+&system
+  p = 1.5707963267948966
+  k = 3.0
+/
+&simulation
+  n_kicks = 300
+  n_transient = 0
+  save_every = 1
+/
+&initial
+  mode = 'single'
+  theta0 = 2.2142974355881813
+  phi0 = 0.6
+  n_theta = 1
+  n_phi = 1
+/
+&output
+  out_dir = 'docs/figures/data/single_regular'
+/

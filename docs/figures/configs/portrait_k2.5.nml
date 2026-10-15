@@ -1,0 +1,19 @@
+&system
+  p = 1.5707963267948966
+  k = 2.5
+/
+&simulation
+  n_kicks = 500
+  n_transient = 0
+  save_every = 1
+/
+&initial
+  mode = 'grid'
+  theta0 = 0
+  phi0 = 0
+  n_theta = 20
+  n_phi = 20
+/
+&output
+  out_dir = 'docs/figures/data/portrait_k2.5'
+/
