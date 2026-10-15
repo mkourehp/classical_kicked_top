@@ -222,3 +222,13 @@ __marimo__/
 # Build and simulation output
 build/
 output/
+
+# Lecture notes
+docs/figures/data/
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.toc
+*.synctex.gz

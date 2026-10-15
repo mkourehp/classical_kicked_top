@@ -1,0 +1,848 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric}
+\usepackage[colorlinks=true,linkcolor=blue!60!black,citecolor=blue!60!black,urlcolor=blue!60!black]{hyperref}
+\usepackage{cleveref}
+\usepackage[section]{placeins}
+
+\newtheorem*{theorem*}{Theorem}
+\newcommand{\vs}{\bm{s}}
+\newcommand{\vJ}{\bm{J}}
+\newcommand{\PB}[2]{\{#1,#2\}}
+\newcommand{\Tr}{\operatorname{Tr}}
+
+\lstdefinestyle{fortran}{
+  language=[08]Fortran, basicstyle=\ttfamily\small, keywordstyle=\color{blue!60!black}\bfseries,
+  commentstyle=\color{green!40!black}\itshape, numbers=left, numberstyle=\tiny\color{gray},
+  frame=single, framerule=0.3pt, rulecolor=\color{gray!60}, breaklines=true, columns=fullflexible}
+\lstset{style=fortran}
+
+\title{The Classical Kicked Top\\[0.3em] \large Lecture notes on the physics and on the \texttt{classical\_kicked\_top} code}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+These notes explain the classical kicked top from the ground up: angular momentum as a dynamical variable, the
+sphere as a phase space, the kicked-top Hamiltonian and its stroboscopic map, energy, symmetries, fixed points and
+their stability, the transition from regular to chaotic motion, and Lyapunov exponents, with a short outlook on the
+quantum kicked top. The second part describes the numerical method and the structure of the Fortran/Python code,
+pointing each piece of code to the equation it implements. The only prerequisites are Hamiltonian mechanics
+(Hamilton's equations, Poisson brackets) and basic linear algebra. All phase-space figures were produced with the code
+described in \cref{part:numerics}.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%=====================================================================
+\part{Physics}
+%=====================================================================
+
+\section{Angular momentum as a dynamical variable}\label{sec:angmom}
+
+\subsection{Poisson brackets of angular momentum}
+
+Recall that for canonical coordinates $q_a$ and momenta $p_a$ the Poisson bracket of two phase-space functions is
+\begin{equation}
+  \PB{A}{B} = \sum_a \left( \frac{\partial A}{\partial q_a}\frac{\partial B}{\partial p_a}
+                          - \frac{\partial A}{\partial p_a}\frac{\partial B}{\partial q_a} \right),
+  \qquad \PB{q_a}{p_b} = \delta_{ab},
+\end{equation}
+and that any observable evolves as
+\begin{equation}\label{eq:eom-general}
+  \frac{dA}{dt} = \PB{A}{H} + \frac{\partial A}{\partial t}.
+\end{equation}
+
+Take a particle with position $\bm r$ and momentum $\bm p$ and its angular momentum $\vJ = \bm r \times \bm p$, i.e.
+$J_i = \epsilon_{ijk} r_j p_k$ (sum over repeated indices; $\epsilon_{ijk}$ is the Levi-Civita symbol). A short
+calculation gives, for example,
+\begin{equation*}
+  \PB{J_x}{J_y} = \PB{y p_z - z p_y}{z p_x - x p_z}
+  = y\,\PB{p_z}{z}\,p_x + p_y\,\PB{z}{p_z}\,x = -y p_x + x p_y = J_z ,
+\end{equation*}
+and in general
+\begin{equation}\label{eq:J-algebra}
+  \boxed{\PB{J_i}{J_j} = \epsilon_{ijk}\, J_k .}
+\end{equation}
+The key idea of these notes is that \eqref{eq:J-algebra} is \emph{all} we need. We can forget $\bm r$ and $\bm p$
+and treat the three components $J_x, J_y, J_z$ themselves as the dynamical variables, with the bracket
+\eqref{eq:J-algebra}. This is how one describes the orientation of a rigid body's angular momentum, the total angular
+momentum of many atoms, or the classical limit of a \emph{spin}. A spin is an angular momentum that has no
+$\bm r \times \bm p$ behind it, but whose quantum operators satisfy $[\hat J_i,\hat J_j] = i\hbar\,\epsilon_{ijk}\hat
+J_k$, the quantum version of \eqref{eq:J-algebra} (the usual correspondence is $\PB{\cdot}{\cdot} \leftrightarrow
+[\cdot,\cdot]/i\hbar$).
+
+For any function $f(\vJ)$, the chain rule and \eqref{eq:J-algebra} give
+\begin{equation}\label{eq:J-f-bracket}
+  \PB{J_i}{f} = \frac{\partial f}{\partial J_m}\PB{J_i}{J_m} = \epsilon_{imk}\,\frac{\partial f}{\partial J_m}\, J_k .
+\end{equation}
+
+\subsection{The length of \texorpdfstring{$\vJ$}{J} is conserved: the phase space is a sphere}
+
+Let $J^2 = J_x^2 + J_y^2 + J_z^2$. Using \eqref{eq:J-f-bracket},
+\begin{equation}
+  \PB{J_i}{J^2} = \epsilon_{imk}\, 2 J_m J_k = 0 ,
+\end{equation}
+because $\epsilon_{imk}$ is antisymmetric in $m,k$ while $J_m J_k$ is symmetric. Hence $J^2$ has a vanishing bracket
+with every function of $\vJ$ (it is a \emph{Casimir} of the bracket), and in particular with every Hamiltonian
+$H(\vJ,t)$:
+\begin{equation}
+  \frac{d J^2}{dt} = \PB{J^2}{H} = 0 .
+\end{equation}
+Whatever the Hamiltonian, the vector $\vJ$ moves on a sphere of fixed radius, which we call $j$:
+\begin{equation}
+  |\vJ| = j .
+\end{equation}
+This sphere is the phase space of the system. It is two-dimensional, so the system has \emph{one degree of freedom},
+just like a particle on a line. The difference is that the phase space is compact (finite area) and curved.
+
+\subsection{Canonical coordinates on the sphere}\label{sec:canonical}
+
+Parametrise the sphere with the usual polar angle $\theta$ (measured from the $z$ axis) and azimuth $\phi$
+(\cref{fig:sphere-coords}):
+\begin{equation}\label{eq:spherical}
+  \vJ = j\,(\sin\theta\cos\phi,\ \sin\theta\sin\phi,\ \cos\theta).
+\end{equation}
+\begin{figure}[!htbp]
+  \centering
+  \begin{tikzpicture}[scale=2.2, >=Stealth]
+    \draw[thick] (0,0) circle (1);
+    \draw[gray] (-1,0) arc (180:360:1 and 0.3);
+    \draw[gray,dashed] (1,0) arc (0:180:1 and 0.3);
+    \draw[->] (0,0) -- (0,1.35) node[above] {$z$};
+    \draw[->] (0,0) -- (-0.75,-0.55) node[below left] {$x$};
+    \draw[->] (0,0) -- (1.35,0) node[right] {$y$};
+    \coordinate (P) at (0.45,0.62);
+    \coordinate (Q) at (0.45,-0.18);
+    \draw[->,very thick,red!70!black] (0,0) -- (P) node[above right] {$\vJ$};
+    \draw[dashed] (P) -- (Q);
+    \draw[dashed] (0,0) -- (Q);
+    \draw[->] (0,0.4) arc (90:54:0.4);
+    \node at (0.13,0.5) {$\theta$};
+    \draw[->] (-0.32,-0.235) arc (216:338:0.4 and 0.13);
+    \node at (0.05,-0.27) {$\phi$};
+    \draw[dotted] (P) -- (0,0.62) node[left] {$J_z = j\cos\theta$};
+  \end{tikzpicture}
+  \caption{Coordinates on the phase-space sphere of radius $j$. The canonical pair is $(\phi, J_z)$.}
+  \label{fig:sphere-coords}
+\end{figure}
+
+\begin{theorem*}
+The pair $(q,p) = (\phi, J_z)$ is canonical: $\PB{\phi}{J_z} = 1$.
+\end{theorem*}
+\begin{proof}
+Write $J_x = R\cos\phi$, $J_y = R\sin\phi$ with $R = \sqrt{j^2 - J_z^2}$, so that $\partial R/\partial J_z =
+-J_z/R$, and compute brackets with $\PB{A}{B} = \partial_\phi A\,\partial_{J_z}B - \partial_{J_z}A\,\partial_\phi B$:
+\begin{align*}
+  \PB{J_x}{J_y} &= (-R\sin\phi)\Big(-\tfrac{J_z}{R}\sin\phi\Big) - \Big(-\tfrac{J_z}{R}\cos\phi\Big)(R\cos\phi) = J_z, \\
+  \PB{J_y}{J_z} &= R\cos\phi = J_x, \qquad \PB{J_z}{J_x} = -(-R\sin\phi) = J_y .
+\end{align*}
+This reproduces \eqref{eq:J-algebra}, so $(\phi,J_z)$ is a valid canonical pair.
+\end{proof}
+
+The phase-space (Liouville) area element is therefore $d\phi\, dJ_z$. The geometric area element of the sphere is
+$j^2\sin\theta\, d\theta\, d\phi$, and since $dJ_z = -j\sin\theta\, d\theta$,
+\begin{equation}\label{eq:area}
+  j^2 \sin\theta\, d\theta\, d\phi = j\; d\phi\, dJ_z .
+\end{equation}
+\emph{Phase-space area and geometric area on the sphere are the same thing} (up to the constant $j$). This is
+Archimedes' ``hat-box'' theorem: the band between two heights $z_1<z_2$ has area proportional to $z_2-z_1$. The total
+phase-space area is $4\pi j$. For this reason all phase-space plots in these notes use the axes $(\phi, \cos\theta)$
+and not $(\phi,\theta)$: equal areas in the plot are equal areas on the sphere.
+
+\subsection{Linear Hamiltonians generate rotations}\label{sec:precession}
+
+Take $H = \bm\omega\cdot\vJ$ with a constant vector $\bm\omega$. With \eqref{eq:eom-general} and
+\eqref{eq:J-f-bracket},
+\begin{equation}\label{eq:precession}
+  \frac{dJ_i}{dt} = \PB{J_i}{\omega_m J_m} = \epsilon_{imk}\,\omega_m J_k
+  \quad\Longleftrightarrow\quad
+  \frac{d\vJ}{dt} = \bm\omega \times \vJ .
+\end{equation}
+This is \emph{precession}. $\vJ$ rotates rigidly about the axis $\hat{\bm\omega}$ with angular velocity
+$|\bm\omega|$, counter-clockwise when looking down the axis (right-hand rule). After a time $t$ the solution is $\vJ(t)
+= R_{\hat{\bm\omega}}(|\bm\omega|t)\,\vJ(0)$. We will need the rotation matrices about $y$ and about $z$:
+\begin{equation}\label{eq:rotations}
+  R_y(\alpha) = \begin{pmatrix} \cos\alpha & 0 & \sin\alpha\\ 0 & 1 & 0 \\ -\sin\alpha & 0 & \cos\alpha \end{pmatrix},
+  \qquad
+  R_z(\alpha) = \begin{pmatrix} \cos\alpha & -\sin\alpha & 0\\ \sin\alpha & \cos\alpha & 0 \\ 0 & 0 & 1 \end{pmatrix}.
+\end{equation}
+(Check: for $\bm\omega = \hat{\bm y}$, $\hat{\bm y}\times\vJ = (J_z, 0, -J_x)$, which is $\frac{d}{d\alpha}R_y(\alpha)\vJ$
+at $\alpha=0$.)
+
+A Hamiltonian that is a function of $\vJ$ but not linear (for example $J_z^2$) still generates a rotation at each
+instant, but the axis and the rate depend on where $\vJ$ is. That nonlinearity is the source of chaos.
+
+%---------------------------------------------------------------------
+\section{The kicked top}\label{sec:model}
+
+\subsection{Hamiltonian}
+
+The kicked top is an angular momentum $\vJ$ with $|\vJ| = j$ and the time-periodic Hamiltonian
+\begin{equation}\label{eq:H}
+  \boxed{H(t) = p\, J_y + \frac{k}{2j}\, J_z^2 \sum_{n=-\infty}^{\infty} \delta(t-n) ,}
+\end{equation}
+with two real parameters:
+\begin{itemize}
+  \item $p$, the angle of free precession about the $y$ axis accumulated in one period (the period is set to $1$);
+  \item $k$, the strength of the \emph{kick}, also called the \emph{torsion} or \emph{twist}.
+\end{itemize}
+The first term is linear, so it generates a uniform rotation about $y$ (\cref{sec:precession}). The second term acts
+only at the instants $t = n$ (integer $n$). It is quadratic in $J_z$: as shown below, it rotates $\vJ$ about the $z$
+axis by an angle proportional to $J_z$. Points on the upper hemisphere are turned one way, points on the lower
+hemisphere the other way, and the equator not at all, like twisting a towel. The factor $1/j$ makes the twist angle depend only on the
+\emph{direction} of $\vJ$ (see below).
+
+Because $H$ depends explicitly on time, $dH/dt = \partial H/\partial t \ne 0$, so energy is \emph{not} conserved
+(\cref{sec:energy}). With one degree of freedom and no conserved quantity, the motion can be chaotic. In contrast, a
+time-independent one-degree-of-freedom system is always integrable.
+
+\subsection{Scaled variables: only the direction matters}\label{sec:scaled}
+
+Introduce the unit vector
+\begin{equation}\label{eq:unit}
+  \vs = \frac{\vJ}{j} = (X, Y, Z) = (\sin\theta\cos\phi,\ \sin\theta\sin\phi,\ \cos\theta), \qquad |\vs| = 1,
+\end{equation}
+and write $H = j\, h$ with
+\begin{equation}\label{eq:h}
+  h(\vs,t) = p\, Y + \frac{k}{2}\, Z^2 \sum_n \delta(t-n).
+\end{equation}
+From \eqref{eq:J-f-bracket}, $\frac{ds_i}{dt} = \frac1j \PB{J_i}{H} = \epsilon_{imk}\,\frac{\partial h}{\partial
+s_m}\, s_k$, i.e.
+\begin{equation}\label{eq:eom-s}
+  \boxed{\frac{d\vs}{dt} = \nabla_{\!s}\, h \times \vs .}
+\end{equation}
+The radius $j$ has dropped out. The classical dynamics of the direction $\vs$ is the same for every $j$, so we
+can work on the unit sphere. The value of $j$ only matters in the quantum theory, where $1/j$ plays the role of
+Planck's constant (\cref{sec:quantum}).
+
+%---------------------------------------------------------------------
+\section{The stroboscopic map}\label{sec:map}
+
+Because the Hamiltonian is periodic and the kicks are instantaneous, it is natural to look at the system once per
+period, just after each kick. Let $\vs_n$ be the state at $t = n^+$ (just after the kick at $t=n$). Integrating
+\eqref{eq:eom-s} from $t=n^+$ to $t=(n+1)^+$ gives a map $\vs_{n+1} = F(\vs_n)$, the \emph{stroboscopic} or
+\emph{Floquet} map. It is derived in two steps.
+
+\paragraph{Step 1: free precession.} For $n < t < n+1$ only the first term of \eqref{eq:h} is present:
+$\nabla_s h = p\,\hat{\bm y}$, so $\dot{\vs} = p\,\hat{\bm y}\times\vs$. During one unit of time this is a rotation
+about $y$ by the angle $p$, $\vs' = R_y(p)\,\vs_n$:
+\begin{equation}\label{eq:rotation-y}
+  X' = X\cos p + Z\sin p, \qquad Y' = Y, \qquad Z' = -X\sin p + Z\cos p .
+\end{equation}
+
+\paragraph{Step 2: the kick.} Near $t = n+1$ the $\delta$-function dominates and the finite precession term
+contributes nothing over the infinitesimal kick duration. Now $\nabla_s h = kZ\,\delta(t-n-1)\,\hat{\bm z}$ and
+\begin{equation}
+  \dot{\vs} = k Z\, \delta(t-n-1)\; \hat{\bm z}\times\vs .
+\end{equation}
+The $z$ component of $\hat{\bm z}\times\vs$ is zero, so $Z$ does not change during the kick. The equation is then
+a rotation about $z$ with angular velocity $kZ\,\delta(t-n-1)$, and integrating over the kick gives a rotation by
+the finite angle $kZ$ (with $Z=Z'$ the value at the moment of the kick):
+\begin{equation}\label{eq:torsion}
+  X'' = X'\cos(kZ') - Y'\sin(kZ'), \qquad Y'' = X'\sin(kZ') + Y'\cos(kZ'), \qquad Z'' = Z' .
+\end{equation}
+This is a \emph{torsion}: a rotation about $z$ whose angle depends on the height $Z$.
+
+\paragraph{The map.} Together:
+\begin{equation}\label{eq:map}
+  \boxed{\vs_{n+1} = F(\vs_n) = R_z\!\big(k Z'\big)\, R_y(p)\, \vs_n , \qquad Z' = \big(R_y(p)\vs_n\big)_z .}
+\end{equation}
+\Cref{fig:map-steps} illustrates the two steps. Since $Z$ is unchanged by the torsion, the inverse map is simply
+$F^{-1}(\vs) = R_y(-p)\,R_z(-kZ)\,\vs$. Both steps are rotations, so $|\vs| = 1$ is preserved exactly.
+
+\begin{figure}[!htbp]
+  \centering
+  \begin{tikzpicture}[scale=1.6, >=Stealth]
+    \begin{scope}
+      \draw[thick] (0,0) circle (1);
+      \draw[gray] (-1,0) arc (180:360:1 and 0.3);
+      \draw[gray,dashed] (1,0) arc (0:180:1 and 0.3);
+      \draw[->] (0,0) -- (1.45,0) node[right] {$y$};
+      \draw[->] (0,0) -- (0,1.3) node[above] {$z$};
+      \draw[gray] (0,-1) arc (-90:90:0.3 and 1);
+      \draw[gray,dashed] (0,1) arc (90:270:0.3 and 1);
+      \draw[->,very thick,blue!70!black] (1.2,-0.35) arc (-70:70:0.15 and 0.4);
+      \node[blue!70!black] at (1.25,0.55) {$p$};
+      \node at (0,-1.45) {(a) rotation about $y$ by $p$};
+    \end{scope}
+    \begin{scope}[xshift=3.4cm]
+      \draw[thick] (0,0) circle (1);
+      \draw[->] (0,0) -- (0,1.3) node[above] {$z$};
+      \foreach \z/\len in {0.7/1, 0.35/0.5, 0/0, -0.35/-0.5, -0.7/-1} {
+        \pgfmathsetmacro{\r}{sqrt(1-\z*\z)}
+        \draw[gray] (-\r,\z) arc (180:360:\r cm and 0.3*\r cm);
+        \ifdim \len pt > 0pt
+          \draw[->,very thick,red!70!black] (-0.3*\r,\z-0.29*\r) -- ++(0.55*\len,0);
+        \fi
+        \ifdim \len pt < 0pt
+          \draw[->,very thick,red!70!black] (0.3*\r,\z-0.29*\r) -- ++(0.55*\len,0);
+        \fi
+      }
+      \node[red!70!black] at (1.35,0.7) {$kZ$};
+      \node at (0,-1.45) {(b) torsion about $z$ by $kZ$};
+    \end{scope}
+  \end{tikzpicture}
+  \caption{The two steps of one period of the kicked top, \cref{eq:map}. (a) A rigid rotation about $y$. (b) A
+  rotation about $z$ whose angle $kZ$ grows with height: the upper and lower hemispheres are twisted in opposite
+  directions and the equator stays put.}
+  \label{fig:map-steps}
+\end{figure}
+
+\subsection{The map preserves phase-space area}\label{sec:area}
+
+In the canonical coordinates $(\phi, Z)$ of \cref{sec:canonical}, the torsion \eqref{eq:torsion} reads
+\begin{equation}\label{eq:twist}
+  \phi'' = \phi' + kZ', \qquad Z'' = Z' ,
+\end{equation}
+whose Jacobian matrix $\begin{pmatrix}1 & k\\ 0 & 1\end{pmatrix}$ has determinant $1$. This is the classic
+\emph{twist map}. The rotation \eqref{eq:rotation-y} is a Hamiltonian flow and therefore a canonical
+transformation. By Liouville's theorem it also preserves area. A composition of area-preserving maps is
+area-preserving, so
+\begin{equation}
+  \det DF = 1 \quad\text{(in the coordinates $(\phi,Z)$)}.
+\end{equation}
+Two consequences will be used repeatedly. First, there are no attractors: a region of phase space can be stretched
+and folded but never shrunk. Second, linear stability is decided by a single number, the trace of the Jacobian
+(\cref{sec:stability}).
+
+%---------------------------------------------------------------------
+\section{Energy}\label{sec:energy}
+
+The code evaluates, at every recorded point $\vs_n$, the two terms of the scaled Hamiltonian \eqref{eq:h} without the
+$\delta$ comb, and their sum:
+\begin{equation}\label{eq:energy}
+  E_{\rm rot} = pY, \qquad E_{\rm kick} = \frac{k}{2}Z^2, \qquad E = E_{\rm rot} + E_{\rm kick} = pY + \frac{k}{2}Z^2 .
+\end{equation}
+$E$ is \emph{not} a constant of motion. The Hamiltonian depends on time, and each kick changes $Y$ while each
+precession changes $Z$. There are, however, two reasons why $E$ is a useful quantity.
+
+\paragraph{The near-continuous limit.} Suppose both $p$ and $k$ are small. Each period then moves $\vs$ only a little,
+and the composition of the two small rotations is, to first order, the same as applying them simultaneously. One period
+is then approximately the time-$1$ flow of the \emph{effective Hamiltonian}
+\begin{equation}\label{eq:heff}
+  h_{\rm eff} = pY + \frac{k}{2}Z^2 = E ,
+\end{equation}
+with corrections of order $pk$ (this is the first term of the Baker--Campbell--Hausdorff formula). A time-independent
+one-degree-of-freedom Hamiltonian is conserved, so in this limit $E$ is nearly conserved and orbits follow the level
+curves of $E$. \Cref{fig:near-flow} shows this for $p = 0.1$, $k = 0.2$: every orbit traces a curve of (almost)
+constant colour.
+
+The stationary points of $h_{\rm eff}$ on the sphere (Lagrange condition $\nabla h_{\rm eff} = \lambda\vs$, i.e.
+$(0, p, kZ) = \lambda(X,Y,Z)$) are the poles $\pm\hat{\bm y}$ and, if $k > p$, the two points
+$(0,\, p/k,\, \pm\sqrt{1 - p^2/k^2})$. For $p=0.1$, $k=0.2$ these are at $\phi = \pi/2$, $Z = \pm 0.87$: the two
+centres visible in \cref{fig:near-flow}. The pole $+\hat{\bm y}$ ($\phi=\pi/2$, $Z=0$) has become a saddle, and the
+separatrix through it is clearly visible.
+
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=0.75\textwidth]{figures/near_flow.pdf}
+  \caption{Phase portrait for small parameters $p = 0.1$, $k = 0.2$ ($12\times12$ grid of initial conditions, $1000$
+  kicks each), coloured by $E$ of \cref{eq:energy}. Orbits lie on level curves of $E$, as predicted by \cref{eq:heff}.}
+  \label{fig:near-flow}
+\end{figure}
+
+\paragraph{Away from that limit.} For $p = \pi/2$ the near-continuous picture does not apply and $E$ fluctuates
+from kick to kick (\cref{fig:energy}). On a regular orbit (left) the fluctuations are quasi-periodic and stay inside a
+narrow band. On a chaotic orbit (right) they are erratic, and $E$ wanders over a large part of its allowed range
+$[-p,\ p + k/2]$. The behaviour of $E_n$ is thus a simple diagnostic of regular versus chaotic motion.
+
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=\textwidth]{figures/energy.pdf}
+  \caption{The energy terms \eqref{eq:energy} along a regular orbit (left, started inside the island around the fixed
+  point $\vs_+$ of \cref{sec:pi2}) and along a chaotic orbit (right, started next to the unstable pole $+\hat{\bm y}$),
+  for $p = \pi/2$, $k = 3$.}
+  \label{fig:energy}
+\end{figure}
+
+%---------------------------------------------------------------------
+\section{Integrable limits and symmetry}\label{sec:symmetry}
+
+\paragraph{Integrable limits.} If $k = 0$, the map is a pure rotation $R_y(p)$ and $Y$ is conserved. Every orbit
+lies on a circle $Y = $ const. If $p/2\pi$ is rational, every orbit is periodic (for $p = \pi/2$, period 4). If $p =
+0$, the map is the pure twist \eqref{eq:twist} and $Z$ is conserved. Each circle of latitude rotates rigidly by its
+own angle $kZ$. In both cases the motion is \emph{integrable}: there is a conserved quantity, and its level curves
+are invariant curves that orbits cannot leave. When both $p$ and $k$ are non-zero there is in general no conserved
+quantity.
+
+\paragraph{A symmetry.} Let $S = R_y(\pi)$, i.e. $(X,Y,Z)\mapsto(-X, Y, -Z)$. $S$ commutes with $R_y(p)$. It flips
+$\hat{\bm z} \to -\hat{\bm z}$, so $S R_z(\alpha) S^{-1} = R_z(-\alpha)$, and it flips $Z \to -Z$, so the torsion
+angle changes sign as well. The two sign changes cancel:
+\begin{equation}\label{eq:symmetry}
+  F(S\vs) = S\,F(\vs) .
+\end{equation}
+The image of an orbit under $S$ is therefore again an orbit. In the coordinates $(\phi, Z)$, $S$ is the point
+reflection $(\phi, Z)\mapsto(\pi-\phi, -Z)$ about $(\pi/2, 0)$, and every phase portrait in these notes is symmetric
+under it. Orbits either come in symmetric pairs or are symmetric themselves.
+
+%---------------------------------------------------------------------
+\section{Fixed points, periodic orbits and their stability}\label{sec:stability}
+
+\subsection{Linear stability of an area-preserving map}
+
+A point $\vs^*$ with $F(\vs^*) = \vs^*$ is a \emph{fixed point}. A point with $F^m(\vs^*) = \vs^*$ (and $m$
+minimal) lies on a \emph{periodic orbit} of period $m$. To see what happens near $\vs^*$, write $\vs = \vs^* +
+\delta\vs$ with $\delta\vs$ small and tangent to the sphere. To first order
+\begin{equation}
+  \delta\vs_{n+1} = M\,\delta\vs_n ,
+\end{equation}
+where $M$ is the $2\times2$ Jacobian of $F$ at $\vs^*$, written in any basis of the tangent plane (for a period-$m$
+orbit, $M$ is the product of the $m$ Jacobians along the orbit). Area preservation gives $\det M = 1$, so the
+eigenvalues satisfy $\lambda_1\lambda_2 = 1$ and solve $\lambda^2 - (\Tr M)\lambda + 1 = 0$. Everything is decided by
+the trace:
+\begin{itemize}
+  \item $|\Tr M| < 2$: \textbf{elliptic} (stable). $\lambda_{1,2} = e^{\pm i\alpha}$ with $\cos\alpha = \Tr M/2$. Nearby
+  points circle around $\vs^*$ by an angle of about $\alpha$ per kick and stay close. In the phase portrait an
+  elliptic point sits at the centre of a family of closed curves, an \emph{island}.
+  \item $|\Tr M| > 2$: \textbf{hyperbolic} (unstable). Real eigenvalues $\lambda$ and $1/\lambda$ with $|\lambda| > 1$.
+  Nearby points are pushed away along one direction and pulled in along another, and separations grow like $|\lambda|^n$.
+  Hyperbolic points are the seeds of chaos.
+  \item $|\Tr M| = 2$: \textbf{parabolic}, the boundary case at which \textbf{bifurcations} happen. At $\Tr M = +2$
+  ($\lambda = 1$) new fixed points can branch off. At $\Tr M = -2$ ($\lambda = -1$) a fixed point typically gives birth
+  to a period-2 orbit (\emph{period doubling}).
+\end{itemize}
+
+\subsection{The poles \texorpdfstring{$\pm\hat{\bm y}$}{+-y}}\label{sec:poles}
+
+The two points $\vs = \sigma\hat{\bm y}$, $\sigma = \pm1$, are fixed for all $p$ and $k$. They lie on the rotation axis
+of $R_y$, and they sit on the equator $Z=0$, where the torsion angle vanishes. Near them use the tangent coordinates
+$(x,z)$, $\vs \approx (x, \sigma, z)$. The rotation \eqref{eq:rotation-y} acts as the $2\times2$ rotation
+$\begin{pmatrix}c & s\\ -s & c\end{pmatrix}$ ($c = \cos p$, $s = \sin p$), and the torsion \eqref{eq:torsion} to
+first order gives $x'' = x' - \sigma k z'$, $z'' = z'$. Hence
+\begin{equation}
+  M_\sigma = \begin{pmatrix}1 & -\sigma k\\ 0 & 1\end{pmatrix}\begin{pmatrix}c & s\\ -s & c\end{pmatrix}
+           = \begin{pmatrix} c + \sigma k s & s - \sigma k c\\ -s & c\end{pmatrix},
+  \qquad \det M_\sigma = 1,
+\end{equation}
+\begin{equation}\label{eq:pole-trace}
+  \boxed{\Tr M_\sigma = 2\cos p + \sigma\, k \sin p .}
+\end{equation}
+For $p = \pi/2$ this is $\Tr M_\pm = \pm k$. Both poles are stable for $k<2$, and both become unstable at $k = 2$:
+$+\hat{\bm y}$ through $\Tr = +2$ and $-\hat{\bm y}$ through $\Tr = -2$. For small $p$, $\Tr M_+ \approx 2 - p^2 + kp$
+exceeds $2$ when $k > p$, the same threshold found for $h_{\rm eff}$ in \cref{sec:energy}.
+
+\subsection{The case \texorpdfstring{$p = \pi/2$}{p = pi/2}}\label{sec:pi2}
+
+From now on we use the standard choice $p = \pi/2$. Then $R_y(\pi/2)$ maps $(X,Y,Z) \mapsto (Z, Y, -X)$, the torsion
+angle is $kZ' = -kX$, and the map \eqref{eq:map} becomes
+\begin{equation}\label{eq:map-pi2}
+  X_{n+1} = Z_n\cos(kX_n) + Y_n\sin(kX_n), \quad
+  Y_{n+1} = -Z_n\sin(kX_n) + Y_n\cos(kX_n), \quad
+  Z_{n+1} = -X_n .
+\end{equation}
+
+\paragraph{The fixed points born at $k=2$.} A fixed point needs $Z = -X$, and then the first two equations of
+\eqref{eq:map-pi2} both reduce (using $1+\cos a = 2\cos^2\frac a2$ and $\sin a = 2\sin\frac a2\cos\frac a2$) to
+$Y = X\cot(kX/2)$. Normalisation $X^2+Y^2+Z^2 = 1$ then gives
+\begin{equation}\label{eq:fp}
+  2X^2 + X^2\cot^2\!\Big(\frac{kX}{2}\Big) = 1, \qquad \vs_\pm = \big(\pm X,\ X\cot(kX/2),\ \mp X\big).
+\end{equation}
+As $X\to0$, $X\cot(kX/2) \to 2/k$, so a solution with small $X$ requires $Y \approx 2/k \le 1$, i.e. $k \ge 2$.
+The pair $\vs_\pm$ branches off the pole $+\hat{\bm y}$ exactly at $k = 2$, where its trace passes $+2$: a
+\emph{pitchfork bifurcation}. (A numerical scan confirms that \eqref{eq:fp} has no solution for $k<2$.) The two
+points are mapped onto each other by the symmetry $S$ of \eqref{eq:symmetry}. Solving \eqref{eq:fp} numerically and
+computing the trace of the Jacobian:
+
+\begin{center}
+\begin{tabular}{cccc}
+\toprule
+$k$ & $\vs_+ = (X,Y,Z)$ & $(\phi, Z)$ & $\Tr M$ \\
+\midrule
+2.5 & $(0.514,\ 0.687,\ -0.514)$ & $(0.928,\ -0.514)$ & $\phantom{-}1.00$ \\
+3.0 & $(0.629,\ 0.456,\ -0.629)$ & $(0.627,\ -0.629)$ & $\phantom{-}0.06$ \\
+3.5 & $(0.681,\ 0.272,\ -0.681)$ & $(0.380,\ -0.681)$ & $-0.77$ \\
+4.0 & $(0.702,\ 0.118,\ -0.702)$ & $(0.167,\ -0.702)$ & $-1.47$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The trace decreases with $k$ and reaches $-2$ at $k = \pi\sqrt2 \approx 4.443$. This value can be checked exactly. At
+$k = \pi\sqrt2$, \eqref{eq:fp} is solved by $X = 1/\sqrt2$, $Y = 0$ (since $\cot(\pi/2) = 0$). Linearising
+\eqref{eq:map-pi2} there in the tangent basis $\hat{\bm u} = \hat{\bm y}$, $\hat{\bm w} = (\hat{\bm x}+\hat{\bm
+z})/\sqrt2$ gives $M = \begin{pmatrix} -1 & -\pi/\sqrt2\\ 0 & -1\end{pmatrix}$, so $\Tr M = -2$. Beyond $k\approx4.44$ the
+fixed points $\vs_\pm$ are unstable (period doubling), and their islands disappear from the phase portraits
+(\cref{fig:portraits}, $k = 4.5$).
+
+\paragraph{A period-2 orbit born at $k = 2$.} At $k=2$ the pole $-\hat{\bm y}$ passes $\Tr = -2$ and emits a
+period-2 orbit. For $k = 3$ it consists of the two points $(\phi, Z) = (-0.627,\ 0.629)$ and $(-2.515,\ -0.629)$, with
+$\Tr M^{(2)} = -1.93$ (stable, close to its own period doubling).
+
+\paragraph{A period-4 orbit for every $k$.} The four points $\hat{\bm x} \to -\hat{\bm z} \to -\hat{\bm x} \to
+\hat{\bm z} \to \hat{\bm x}$ form a period-4 orbit for all $k$. $R_y(\pi/2)$ maps them cyclically into each other,
+and each image lies either on the $z$ axis or on the equator, where the torsion does nothing. Its stability depends
+on $k$ in a non-monotonic way:
+\begin{center}
+\begin{tabular}{ccccccc}
+\toprule
+$k$ & 0.5 & 1.5 & 2.5 & 3.0 & 4.5 & 6.0\\
+\midrule
+$\Tr M^{(4)}$ & 1.98 & 0.68 & $-1.99$ & 0.42 & 21.2 & $-1.94$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+It is stable at $k = 3$ and at $k = 6$: its islands are visible around $(\phi,Z) = (0,0)$, $(\pm\pi, 0)$ and near
+the poles $Z = \pm1$ in \cref{fig:portraits}. At $k = 4.5$ it is unstable.
+
+%---------------------------------------------------------------------
+\section{From regular to chaotic motion}\label{sec:chaos}
+
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=\textwidth]{figures/portraits.pdf}
+  \caption{Phase portraits of the kicked top for $p = \pi/2$ and increasing $k$, in the canonical coordinates
+  $(\phi, Z=\cos\theta)$ (equal areas in the plot are equal areas on the sphere). Each panel shows a $20\times20$
+  equal-area grid of initial conditions iterated for $500$ kicks, one colour per orbit. Closed curves are regular
+  (quasi-periodic) orbits. Uniformly speckled regions are filled by chaotic orbits.}
+  \label{fig:portraits}
+\end{figure}
+
+\subsection{Regular motion}
+
+In an integrable map every orbit lies on an invariant curve. If the motion along the curve is a rotation by an
+irrational fraction of a full turn per kick, the orbit fills the curve densely (\emph{quasi-periodic} motion). If it
+is rational, the orbit is periodic. In a phase portrait, regular orbits appear as smooth closed curves.
+
+For $p = \pi/2$ and small $k$ (\cref{fig:portraits}, $k=0.5$), the phase portrait looks almost integrable, although
+the unperturbed map $R_y(\pi/2)$ is degenerate (every orbit has period 4). The explanation is to look at four
+periods at once. Since $R_y(\pi/2)^4 = 1$, the map $F^4$ is close to the identity for small $k$, and to first order in
+$k$ it is the flow of the torsion Hamiltonian $\frac k2 Z^2$ averaged over the four rotated frames. Under successive
+rotations by $\pi/2$ about $y$, $Z^2$ becomes $Z^2, X^2, Z^2, X^2$, so
+\begin{equation}
+  \bar h = \frac{k}{2}\,\big(Z^2 + X^2 + Z^2 + X^2\big) = k\,(1 - Y^2).
+\end{equation}
+$\bar h$ depends only on $Y$, so $Y$ is approximately conserved. The invariant curves are close to circles $Y =$
+const around the poles $\pm\hat{\bm y}$. In the $(\phi,Z)$ plane these are the closed curves around $(\pm\pi/2, 0)$
+in the $k=0.5$ panel. On the great circle $Y = 0$ (the lines $\phi = 0, \pm\pi$) the averaged flow vanishes, so
+higher-order terms decide what happens there. Numerically a thin chaotic layer forms along these lines.
+
+\subsection{KAM theorem and the breakup of invariant curves}
+
+What happens to invariant curves when an integrable map is perturbed? The answer is given by the
+Kolmogorov--Arnold--Moser (KAM) theorem. Stated informally:
+\begin{theorem*}[KAM, informal]
+For a sufficiently small smooth perturbation of an integrable area-preserving twist map, most invariant curves
+survive, only slightly deformed. The survivors are those on which the rotation number is ``sufficiently
+irrational''. The destroyed curves occupy a fraction of phase space that goes to zero with the perturbation.
+\end{theorem*}
+The curves with rational rotation number $r/s$ do not survive. By the Poincaré--Birkhoff theorem, such a curve breaks
+up into a chain of alternating elliptic and hyperbolic period-$s$ points. Around the elliptic ones there are new small
+islands, and near the hyperbolic ones the stable and unstable directions intersect in an infinitely folded pattern
+(a \emph{homoclinic tangle}), which produces a thin chaotic layer. The structure repeats on ever finer scales:
+islands around islands.
+
+As $k$ grows, the chaotic layers widen. When neighbouring resonances overlap (Chirikov's resonance-overlap
+criterion), the KAM curves that separated them are destroyed and the layers merge into a connected \emph{chaotic
+sea}. In a 2D map, surviving KAM curves are impenetrable barriers: a chaotic orbit can never enter an island and a
+regular orbit can never leave one.
+
+\subsection{Mixed and global chaos in the kicked top}
+
+\Cref{fig:portraits} shows the scenario for $p = \pi/2$:
+\begin{itemize}
+  \item $k = 0.5$ and $1.5$: almost everything is regular. Large families of closed curves surround the stable poles
+  $\pm\hat{\bm y}$ ($|\Tr M_\pm| = k < 2$), with thin chaotic layers near $\phi = 0, \pm\pi$.
+  \item $k = 2.5$: the poles have just become unstable (\cref{sec:poles}). Chaos spreads from them, and the new
+  islands of $\vs_\pm$ and of the period-2 orbit appear, together with a mixture of smaller island chains.
+  \item $k = 3$: a \emph{mixed phase space}. A large chaotic sea surrounds islands around $\vs_\pm$ (at $(0.63,
+  -0.63)$ and its mirror image $(2.51, 0.63)$), around the period-2 orbit (at $(-0.63, 0.63)$ and $(-2.51, -0.63)$),
+  and around the period-4 orbit (at $(0,0)$, $(\pm\pi, 0)$ and near $Z = \pm1$). The pairing of islands under $S$
+  of \eqref{eq:symmetry} is clearly visible.
+  \item $k = 4.5$ and $6$: almost \emph{global chaos}. The islands of $\vs_\pm$ are gone ($k > \pi\sqrt2$) and only
+  tiny islands remain (e.g.\ the period-4 island at $(0,0)$ for $k=6$).
+\end{itemize}
+
+\Cref{fig:single-orbits} shows the difference between the two kinds of motion for $k=3$. A single orbit started
+inside the island around $\vs_+$ stays on a closed curve. A single orbit started next to the unstable pole
+$+\hat{\bm y}$ wanders through the whole chaotic sea but never enters any island. \Cref{fig:sphere} shows the $k=3$
+portrait on the sphere itself.
+
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=0.75\textwidth]{figures/single_orbits.pdf}
+  \caption{Two single orbits for $p = \pi/2$, $k = 3$, $300$ kicks each, on top of the full portrait (grey). Blue:
+  started at $(\phi_0, Z_0) = (0.6, -0.6)$, inside the island of $\vs_+$. Red: started at $(1.4, 0)$, near the
+  hyperbolic pole $+\hat{\bm y}$. Stars mark the starting points.}
+  \label{fig:single-orbits}
+\end{figure}
+
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=0.5\textwidth]{figures/sphere.pdf}
+  \caption{The $k=3$ phase portrait of \cref{fig:portraits} drawn on the unit sphere $(X,Y,Z)$.}
+  \label{fig:sphere}
+\end{figure}
+
+%---------------------------------------------------------------------
+\section{Lyapunov exponents}\label{sec:lyapunov}
+
+Chaos means \emph{sensitive dependence on initial conditions}. Two orbits starting a small distance $\delta_0$ apart
+separate exponentially, $\delta_n \sim \delta_0\, e^{\lambda n}$. The rate $\lambda$ is the (maximal)
+\emph{Lyapunov exponent}. Formally, with the tangent map $M_n = DF(\vs_{n-1})\cdots DF(\vs_0)$,
+\begin{equation}\label{eq:lyapunov}
+  \lambda = \lim_{n\to\infty} \frac{1}{n}\ln\frac{\|M_n\,\delta\vs_0\|}{\|\delta\vs_0\|} ,
+\end{equation}
+which for almost every $\delta\vs_0$ does not depend on the direction of $\delta\vs_0$. For an area-preserving 2D
+map the two exponents are $\pm\lambda$, since areas are conserved. Typical values:
+\begin{itemize}
+  \item regular (quasi-periodic) orbits: $\lambda = 0$. Nearby orbits on neighbouring invariant curves separate at
+  most linearly in $n$, because their rotation numbers differ slightly;
+  \item a hyperbolic fixed point with eigenvalue $\lambda_u$: the local rate is $\ln|\lambda_u|$. For the pole
+  $+\hat{\bm y}$ at $k=3$, $\Tr M = 3$ gives $\lambda_u = (3+\sqrt5)/2$ and $\ln\lambda_u \approx 0.96$;
+  \item chaotic orbits: $\lambda > 0$. The value is an average over the whole chaotic sea, which contains regions of
+  very different local stretching.
+\end{itemize}
+
+\Cref{fig:divergence} shows this directly. Pairs of orbits are started with $\theta_0$ differing by $10^{-8}$. In the
+island the distance stays at $\sim10^{-8}$. In the chaotic sea it grows exponentially until it saturates at the size of the
+sphere (at most $2$). A straight-line fit of $\ln\delta_n$ for $5 \le n \le 40$ gives a slope of about $0.47$ per kick.
+This is a rough, finite-time estimate from a single pair; a reliable value of $\lambda$ needs \eqref{eq:lyapunov}
+evaluated over long times with periodic renormalisation of the tangent vector (the method of Benettin \emph{et al.}).
+It is not part of the code yet; \cref{sec:extend} shows where it would fit.
+
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=0.6\textwidth]{figures/divergence.pdf}
+  \caption{Distance between two orbits whose initial $\theta_0$ differ by $10^{-8}$, for $p = \pi/2$, $k = 3$. Blue:
+  both inside the island of $\vs_+$. Orange: both in the chaotic sea. The straight segment on the logarithmic axis is
+  exponential separation.}
+  \label{fig:divergence}
+\end{figure}
+
+%---------------------------------------------------------------------
+\section{Outlook: the quantum kicked top}\label{sec:quantum}
+
+The kicked top was introduced by Haake, Ku\'s and Scharf \cite{HKS1987} as a model for \emph{quantum} chaos. In
+quantum mechanics $\hat{\vJ}$ is a spin operator with $\hat{\vJ}^2 = j(j+1)$ (in units $\hbar = 1$), acting on a
+$(2j+1)$-dimensional space. The Hamiltonian \eqref{eq:H} gives the Floquet operator over one period
+\begin{equation}
+  \hat U = \exp\!\Big(-i\frac{k}{2j}\hat J_z^2\Big)\exp\!\big(-ip\hat J_y\big), \qquad |\psi_{n+1}\rangle = \hat U|\psi_n\rangle ,
+\end{equation}
+the quantum counterpart of \eqref{eq:map}. In terms of $\hat\vs = \hat\vJ/j$ the commutator is $[\hat s_x, \hat s_y]
+= \frac{i}{j}\hat s_z$, so $1/j$ acts as an effective Planck constant and the classical map of these notes is the
+limit $j\to\infty$. A spin coherent state, a minimum-uncertainty wave packet centred at a point $\vs$ of the sphere,
+follows the classical orbit until it spreads. Spreading is slow on regular orbits, and on chaotic orbits it happens
+after a time of order $\ln j/\lambda$.
+
+The classical phase-space structure leaves fingerprints in the quantum system. Examples include the statistics of
+the eigenphases of $\hat U$ (Poisson-like for regular, random-matrix-like for chaotic dynamics), the way eigenstates
+concentrate on classical islands or spread over the chaotic sea, and the entanglement generated when the spin is made
+of many qubits. The book by Haake \cite{Haake} is the standard reference. The kicked top has been realised
+experimentally with the hyperfine spin of cesium atoms \cite{Chaudhury2009} and with superconducting qubits
+\cite{Neill2016}.
+
+%=====================================================================
+\part{Numerics and code}\label{part:numerics}
+%=====================================================================
+
+\section{Numerical method}\label{sec:method}
+
+\paragraph{Exact map, no integrator.} The equations of motion \eqref{eq:eom-s} are solved exactly over one period
+(\cref{sec:map}), so the code never integrates a differential equation. It applies the closed-form map
+\eqref{eq:map}: two rotations per kick, 4 trigonometric evaluations and a few multiplications. There is no time-step
+error, and the only error is floating-point round-off. Since both steps are exact rotations, the norm $|\vs| = 1$
+and the area preservation of \cref{sec:area} hold up to round-off. In practice $\big||\vs_n|-1\big| \lesssim
+3\times10^{-15}$ after 500 kicks.
+
+\paragraph{Round-off on chaotic orbits.} On a chaotic orbit any error, including a round-off error of $10^{-16}$,
+grows like $e^{\lambda n}$. With $\lambda \approx 0.5$ a computed chaotic trajectory differs from the exact trajectory
+with the same initial condition after roughly $\ln(10^{16})/0.5 \approx 70$ kicks. This does not make the
+phase portraits wrong. The computed orbit is still an orbit of the map to round-off accuracy at every step, and (by
+shadowing arguments) it stays close to some true orbit, so it explores the same chaotic sea. Individual chaotic
+trajectories beyond that time should be read statistically, not pointwise.
+
+\paragraph{Initial conditions.} Three modes are available.
+\begin{itemize}
+  \item \texttt{single}: one point given by $(\theta_0, \phi_0)$ through \eqref{eq:unit}.
+  \item \texttt{grid}: an $n_\theta \times n_\phi$ grid of cell centres, uniform in $Z = \cos\theta \in [-1,1]$ and
+  in $\phi \in [-\pi, \pi]$. By \eqref{eq:area} every grid cell has the same phase-space area, so the grid samples all
+  regions of phase space with equal weight. A grid uniform in $\theta$ would oversample the poles.
+  \item \texttt{random}: points with $Z$ and $\phi$ uniformly distributed, which by \eqref{eq:area} is the uniform
+  distribution on the sphere.
+\end{itemize}
+
+\paragraph{Recording.} After \texttt{n\_transient} discarded kicks, the state is stored at kicks $n = 0, m, 2m,
+\dots \le$ \texttt{n\_kicks}, where $m$ = \texttt{save\_every}. The initial point is stored as $n=0$ and
+the map is applied once per kick, so stored points are always ``just after a kick'', as in \cref{sec:map}.
+
+\paragraph{Parallelisation.} Different initial conditions are independent, so the loop over them is parallelised with
+OpenMP. The default configuration ($20\times20$ grid, $500$ kicks) runs in under a second.
+
+\section{Code structure}\label{sec:code}
+
+The physics is in Fortran (\texttt{src/}); the Fortran code writes plot-ready files, and Python only reads and plots
+them. \Cref{fig:flow} shows the data flow and \cref{tab:modules} maps each module to the equations it implements.
+
+\begin{figure}[!htbp]
+  \centering
+  \begin{tikzpicture}[>=Stealth, node distance=0.55cm and 0.7cm,
+      box/.style={draw, rounded corners, align=center, font=\small, minimum height=0.9cm, inner sep=4pt},
+      file/.style={draw, shape=rectangle, fill=gray!10, align=center, font=\small\ttfamily, inner sep=4pt}]
+    \node[file] (nml) {config.nml};
+    \node[box, right=of nml] (cfg) {\texttt{config\_mod}\\ read + validate};
+    \node[box, right=of cfg] (init) {\texttt{init\_mod}\\ $\vs_0$, eqs.~\eqref{eq:unit}, \eqref{eq:area}};
+    \node[box, below=1.0cm of init] (evo) {\texttt{evolve\_mod}\\ $\vs_{n+1} = F(\vs_n)$};
+    \node[box, left=of evo] (map) {\texttt{map\_mod}\\ \texttt{kick}: eq.~\eqref{eq:map}};
+    \node[box, right=of evo] (io) {\texttt{io\_mod}\\ $\phi = \operatorname{atan2}(Y,X)$};
+    \node[box, below=of io] (en) {\texttt{energy\_mod}\\ eq.~\eqref{eq:energy}};
+    \node[file, right=of io] (out) {trajectory.dat\\ phase\_space.dat\\ energy.dat};
+    \node[box, below=of out] (py) {\texttt{post\_processor.py}\\ plots only};
+    \draw[->] (nml) -- (cfg);
+    \draw[->] (cfg) -- (init);
+    \draw[->] (init) -- (evo);
+    \draw[->] (map) -- (evo);
+    \draw[->] (evo) -- (io);
+    \draw[->] (en) -- (io);
+    \draw[->] (io) -- (out);
+    \draw[->] (out) -- (py);
+    \node[font=\small\itshape, above=0.15cm of cfg, xshift=1.6cm] {\texttt{main.f90} calls these in order};
+  \end{tikzpicture}
+  \caption{Data flow of the program. \texttt{main.f90} reads the configuration, builds the initial conditions,
+  evolves them and writes the output.}
+  \label{fig:flow}
+\end{figure}
+
+\begin{table}[!htbp]
+  \centering
+  \small
+  \begin{tabular}{p{3.2cm}p{7.0cm}p{4.2cm}}
+    \toprule
+    File & Role & Physics \\
+    \midrule
+    \texttt{kinds\_mod.f90} & working precision \texttt{wp} (double), constants $\pi$, $2\pi$ & -- \\
+    \texttt{config\_mod.f90} & type \texttt{config\_t}; reads the namelist groups, checks values & parameters $p$, $k$ of \eqref{eq:H} \\
+    \texttt{init\_mod.f90} & \texttt{initial\_conditions}: \texttt{single} / \texttt{grid} / \texttt{random}; \texttt{spherical\_to\_cartesian} & \eqref{eq:unit}; equal-area grid from \eqref{eq:area} \\
+    \texttt{map\_mod.f90} & pure function \texttt{kick(s, p, k)}: one period & \eqref{eq:rotation-y}, \eqref{eq:torsion}, \eqref{eq:map} \\
+    \texttt{evolve\_mod.f90} & iterates \texttt{kick} for all initial conditions (OpenMP), transient and \texttt{save\_every} & $\vs_n = F^n(\vs_0)$ \\
+    \texttt{energy\_mod.f90} & pure function \texttt{energy(s, p, k)} $\to [pY,\ \frac k2 Z^2,\ \text{total}]$ & \eqref{eq:energy} \\
+    \texttt{io\_mod.f90} & writes the three ASCII files; computes $\phi = \operatorname{atan2}(Y,X) \in (-\pi,\pi]$ & coordinates of \cref{sec:canonical} \\
+    \texttt{main.f90} & driver: \texttt{read\_config} $\to$ \texttt{initial\_conditions} $\to$ \texttt{evolve} $\to$ \texttt{write\_results} & -- \\
+    \texttt{post\_processor.py} (in \texttt{scripts/}) & class \texttt{PostProcessor}: phase-space plot $(\phi, Z)$, 3D plot on the sphere & -- \\
+    \bottomrule
+  \end{tabular}
+  \caption{Files of the code and the equations they implement.}
+  \label{tab:modules}
+\end{table}
+
+\paragraph{The map.} The function \texttt{kick} in \texttt{map\_mod.f90} is a line-by-line transcription of
+\eqref{eq:rotation-y} (lines 18--22 of the listing) and \eqref{eq:torsion} (lines 24--28):
+\lstinputlisting[firstline=9, lastline=29, firstnumber=9]{../src/map_mod.f90}
+
+\paragraph{The equal-area grid.} \texttt{grid\_points} in \texttt{init\_mod.f90} places cell centres uniformly in
+$Z$ and $\phi$, as required by \eqref{eq:area}:
+\lstinputlisting[firstline=45, lastline=52, firstnumber=45]{../src/init_mod.f90}
+
+\subsection{Parameters}
+
+All parameters are read from a namelist file (default \texttt{config.nml}; another file can be passed as the first
+command-line argument). Missing groups or variables keep their defaults.
+\begin{center}
+\small
+\begin{tabular}{lll}
+  \toprule
+  Group & Variable & Meaning \\
+  \midrule
+  \texttt{\&system} & \texttt{p}, \texttt{k} & rotation angle $p$ and torsion strength $k$ in \eqref{eq:H} \\
+  \texttt{\&simulation} & \texttt{n\_kicks} & number of kicks recorded after the transient \\
+   & \texttt{n\_transient} & kicks discarded before recording \\
+   & \texttt{save\_every} & store every \texttt{save\_every}-th kick \\
+  \texttt{\&initial} & \texttt{mode} & \texttt{'single'}, \texttt{'grid'} or \texttt{'random'} \\
+   & \texttt{theta0}, \texttt{phi0} & initial point for \texttt{single} (radians) \\
+   & \texttt{n\_theta}, \texttt{n\_phi} & grid size in $Z=\cos\theta$ and in $\phi$ \\
+   & \texttt{n\_random}, \texttt{seed} & number of random points and seed \\
+  \texttt{\&output} & \texttt{out\_dir} & output directory \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Output files}
+
+All files are ASCII, start with a header line \texttt{\# p = \dots, k = \dots} and a column line, and contain one
+block per initial condition separated by a blank line. The three files have the same row order, so row $r$ of each
+file refers to the same point $\vs_n$.
+\begin{center}
+\small
+\begin{tabular}{ll}
+  \toprule
+  File & Columns \\
+  \midrule
+  \texttt{trajectory.dat} & orbit index \texttt{ic}, kick \texttt{n}, $X$, $Y$, $Z$ \\
+  \texttt{phase\_space.dat} & \texttt{ic}, \texttt{n}, $\phi$, $Z$ \quad (canonical coordinates, \cref{sec:canonical}) \\
+  \texttt{energy.dat} & $pY$, $\frac k2 Z^2$, total \quad (\cref{eq:energy}) \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Building and running}
+
+\begin{lstlisting}[language=bash, numbers=none]
+make                                   # build/kicked_top
+./build/kicked_top config.nml          # or: make run
+python scripts/post_processor.py       # output/phase_space.png
+python scripts/post_processor.py --sphere --show
+make figures                           # recompute the figures of these notes
+make docs                              # compile docs/kicked_top_notes.tex
+\end{lstlisting}
+The figures of these notes are reproducible. \texttt{make figures} runs the program on every namelist in
+\texttt{docs/figures/configs/}, writing the output to \texttt{docs/figures/data/}. Then the script
+\texttt{plot\_figures.py} in \texttt{docs/figures/} draws the PDF figures from those files.
+
+\subsection{Verification}
+
+The following checks were carried out on the code:
+\begin{itemize}
+  \item $k = 0$, $p = \pi/2$: the map is $R_y(\pi/2)$, so every orbit must return to its starting point after 4 kicks.
+  Observed error: $5\times10^{-16}$.
+  \item $\big||\vs_n| - 1\big| \le 3.4\times10^{-15}$ for the default run ($400$ orbits, $500$ kicks, $k=3$).
+  \item The three columns of \texttt{energy.dat} agree with $pY$, $\frac k2 Z^2$ and their sum recomputed from
+  \texttt{trajectory.dat} to $10^{-15}$.
+  \item The fixed points, traces and symmetry of \cref{sec:symmetry,sec:stability} were checked against the map
+  numerically, and they agree with the islands in \cref{fig:portraits}.
+\end{itemize}
+
+\subsection{Extending the code}\label{sec:extend}
+
+New functionality follows the same pattern: one module with its own namelist group and an on/off switch, called from
+\texttt{main.f90}. For example, a Lyapunov exponent module would
+\begin{enumerate}
+  \item add a pure function for the tangent map $DF(\vs)\,\delta\vs$ (the derivative of \eqref{eq:map}) next to
+  \texttt{kick} in \texttt{map\_mod};
+  \item add \texttt{lyapunov\_mod.f90}, which evolves $(\vs, \delta\vs)$ together, renormalises $\delta\vs$ every
+  kick and accumulates $\ln\|\delta\vs\|$ to estimate \eqref{eq:lyapunov} for every initial condition;
+  \item add a group \texttt{\&analysis lyapunov = .true. /} to the namelist and a file \texttt{lyapunov.dat}
+  (\texttt{ic}, $\lambda$) written by \texttt{io\_mod}, which Python can plot as a colour map over the initial
+  conditions.
+\end{enumerate}
+Other variants (a different kick axis, several kicks per period, dissipation) only replace \texttt{kick}. The rest
+of the program does not depend on the form of the map.
+
+%=====================================================================
+\begin{thebibliography}{9}
+\bibitem{HKS1987} F.~Haake, M.~Ku\'s, R.~Scharf, \emph{Classical and quantum chaos for a kicked top},
+  Z.~Phys.~B \textbf{65}, 381 (1987).
+\bibitem{Haake} F.~Haake, S.~Gnutzmann, M.~Ku\'s, \emph{Quantum Signatures of Chaos}, 4th ed., Springer (2018).
+\bibitem{LL} A.~J.~Lichtenberg, M.~A.~Lieberman, \emph{Regular and Chaotic Dynamics}, 2nd ed., Springer (1992).
+\bibitem{Ott} E.~Ott, \emph{Chaos in Dynamical Systems}, 2nd ed., Cambridge University Press (2002).
+\bibitem{Arnold} V.~I.~Arnold, \emph{Mathematical Methods of Classical Mechanics}, 2nd ed., Springer (1989).
+\bibitem{Chirikov} B.~V.~Chirikov, \emph{A universal instability of many-dimensional oscillator systems},
+  Phys.~Rep.~\textbf{52}, 263 (1979).
+\bibitem{Benettin} G.~Benettin, L.~Galgani, A.~Giorgilli, J.-M.~Strelcyn, \emph{Lyapunov characteristic exponents
+  for smooth dynamical systems and for Hamiltonian systems}, Meccanica \textbf{15}, 9 (1980).
+\bibitem{Chaudhury2009} S.~Chaudhury, A.~Smith, B.~E.~Anderson, S.~Ghose, P.~S.~Jessen, \emph{Quantum signatures of
+  chaos in a kicked top}, Nature \textbf{461}, 768 (2009).
+\bibitem{Neill2016} C.~Neill \emph{et al.}, \emph{Ergodic dynamics and thermalization in an isolated quantum
+  system}, Nature Phys.~\textbf{12}, 1037 (2016).
+\end{thebibliography}
+
+\end{document}
