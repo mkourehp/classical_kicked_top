@@ -19,6 +19,7 @@ Makefile                 gfortran + OpenMP, build artifacts in build/
 src/kinds_mod.f90        precision and constants
 src/config_mod.f90       namelist reading and validation
 src/map_mod.f90          one kick (rotation + torsion)
+src/energy_mod.f90       energy terms pY, (k/2)Z^2 and their sum
 src/init_mod.f90         initial conditions: single / grid / random
 src/evolve_mod.f90       iteration of the map over all initial conditions
 src/io_mod.f90           ASCII output
@@ -59,3 +60,4 @@ ASCII, one block per initial condition separated by a blank line; first line is 
 
 - `trajectory.dat`: `ic n X Y Z`
 - `phase_space.dat`: `ic n phi Z`, with $\phi \in (-\pi, \pi]$
+- `energy.dat`: `pY  k/2*Z^2  total`, row-aligned with the two files above
