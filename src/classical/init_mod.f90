@@ -1,11 +1,12 @@
-! Initial conditions s0 on the unit sphere.
+! Initial conditions s0 of the classical kicked top on the unit sphere.
 ! Lecture notes: Sec. 10 (initial conditions), eqs. (13) [eq:unit] and (9) [eq:area].
 module init_mod
   use kinds_mod, only: wp, pi, two_pi
   use config_mod, only: config_t
+  use sphere_mod, only: spherical_to_cartesian, equal_area_grid
   implicit none
   private
-  public :: initial_conditions, spherical_to_cartesian
+  public :: initial_conditions
 
 contains
 
@@ -26,34 +27,18 @@ contains
     end select
   end subroutine initial_conditions
 
-  ! The unit vector s = (sin(theta)cos(phi), sin(theta)sin(phi), cos(theta)), eq. (13) [eq:unit].
-  pure function spherical_to_cartesian(theta, phi) result(s)
-    real(wp), intent(in) :: theta
-    real(wp), intent(in) :: phi
-    real(wp) :: s(3)
-
-    s = [sin(theta)*cos(phi), sin(theta)*sin(phi), cos(theta)]
-  end function spherical_to_cartesian
-
-  ! Cell centres of an n_theta x n_phi grid that is uniform in the canonical
-  ! coordinates (phi, Z=cos(theta)) of Sec. 1.3 [sec:canonical]. By eq. (9)
-  ! [eq:area] every cell has the same area on the sphere.
+  ! The cell centres of the equal-area grid of sphere_mod, as unit vectors.
   subroutine grid_points(n_theta, n_phi, s0)
     integer, intent(in) :: n_theta
     integer, intent(in) :: n_phi
     real(wp), allocatable, intent(out) :: s0(:,:)
-    integer :: i, j, ic
-    real(wp) :: z, phi
+    real(wp) :: theta(n_theta*n_phi), phi(n_theta*n_phi)
+    integer :: ic
 
+    call equal_area_grid(n_theta, n_phi, theta, phi)
     allocate(s0(3, n_theta*n_phi))
-    ic = 0
-    do i = 1, n_theta
-      z = -1.0_wp + (real(i, wp) - 0.5_wp)*2.0_wp/real(n_theta, wp)
-      do j = 1, n_phi
-        phi = -pi + (real(j, wp) - 0.5_wp)*two_pi/real(n_phi, wp)
-        ic = ic + 1
-        s0(:, ic) = spherical_to_cartesian(acos(z), phi)
-      end do
+    do ic = 1, n_theta*n_phi
+      s0(:, ic) = spherical_to_cartesian(theta(ic), phi(ic))
     end do
   end subroutine grid_points
 
