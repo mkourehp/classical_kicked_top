@@ -1,0 +1,21 @@
+&system
+  p = 1.5707963267948966
+  k = 3.0
+/
+&simulation
+  n_kicks = 2000
+  n_transient = 0
+  save_every = 2000
+/
+&initial
+  mode = 'grid'
+  n_theta = 80
+  n_phi = 80
+/
+&output
+  out_dir = 'docs/figures/data/lyapunov_k3.0'
+/
+&lyapunov
+  enabled = .true.
+  n_renorm = 1
+/

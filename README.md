@@ -18,16 +18,19 @@ config.nml               parameters (namelist)
 Makefile                 gfortran + OpenMP, build artifacts in build/
 src/kinds_mod.f90        precision and constants
 src/config_mod.f90       namelist reading and validation
-src/map_mod.f90          one kick (rotation + torsion)
+src/map_mod.f90          one kick (rotation + torsion) and its tangent map
 src/energy_mod.f90       energy terms pY, (k/2)Z^2 and their sum
 src/init_mod.f90         initial conditions: single / grid / random
 src/evolve_mod.f90       iteration of the map over all initial conditions
+src/lyapunov_mod.f90     largest Lyapunov exponent (Benettin algorithm)
 src/io_mod.f90           ASCII output
 src/main.f90             driver
 scripts/post_processor.py  plots
 ```
 
 New features go in their own module with their own namelist group, called from `main.f90`.
+
+The physics and the code are explained in the lecture notes `docs/kicked_top_notes.pdf` (`make docs` rebuilds them, `make figures` recomputes their figures). Code comments cite the equations they implement by number and LaTeX label, e.g. `eq. (20) [eq:map]`.
 
 ## Usage
 
@@ -36,6 +39,7 @@ make                                    # builds build/kicked_top
 ./build/kicked_top config.nml           # or: make run
 python scripts/post_processor.py        # output/phase_space.png
 python scripts/post_processor.py --sphere --show   # also 3D trajectory, open windows
+python scripts/post_processor.py --lyapunov        # also output/lyapunov.png (needs &lyapunov enabled)
 ```
 
 Python needs `numpy` and `matplotlib`.
@@ -53,6 +57,8 @@ Python needs `numpy` and `matplotlib`.
 | | `n_theta`, `n_phi` | grid size, uniform in $Z=\cos\theta$ and $\phi$ |
 | | `n_random`, `seed` | random points, uniform on the sphere |
 | `&output` | `out_dir` | output directory |
+| `&lyapunov` | `enabled` | compute the largest Lyapunov exponent of every initial condition |
+| | `n_renorm` | rescale the tangent vector every `n_renorm` kicks |
 
 ## Output
 
@@ -61,3 +67,4 @@ ASCII, one block per initial condition separated by a blank line; first line is 
 - `trajectory.dat`: `ic n X Y Z`
 - `phase_space.dat`: `ic n phi Z`, with $\phi \in (-\pi, \pi]$
 - `energy.dat`: `pY  k/2*Z^2  total`, row-aligned with the two files above
+- `lyapunov.dat` (if `&lyapunov` is enabled): `ic phi0 Z0 Lambda`, one line per initial condition

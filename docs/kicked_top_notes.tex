@@ -918,8 +918,8 @@ the sphere (at most $2$, the diameter). Taking the logarithm of $d_n \sim d_0e^{
 d_0 + \Lambda n$, a straight line of slope $\Lambda$. A straight-line fit of $\ln d_n$ for $5 \le n \le 40$ gives a
 slope of about $0.47$ per kick. This is a rough, finite-time estimate from a single pair. A reliable value of $\Lambda$
 needs \eqref{eq:lyapunov} evaluated over long times, with $\delta\vs$ rescaled to unit length every few kicks so that it
-never leaves the linear regime (the method of Benettin \emph{et al.}~\cite{Benettin}). It is not part of the code
-yet; \cref{sec:extend} shows where it would fit.
+never leaves the linear regime (the method of Benettin \emph{et al.}~\cite{Benettin}). The code computes $\Lambda$
+in exactly this way (\cref{sec:benettin}).
 
 \begin{figure}[!htbp]
   \centering
@@ -928,6 +928,62 @@ yet; \cref{sec:extend} shows where it would fit.
   both inside the island of $\vs_+$. Orange: both in the chaotic sea. The straight segment on the logarithmic axis is
   exponential separation.}
   \label{fig:divergence}
+\end{figure}
+
+\subsection{Computing \texorpdfstring{$\Lambda$}{Lambda}: the tangent map and the Benettin algorithm}\label{sec:benettin}
+
+\paragraph{The tangent map for any $p$.} The definition \eqref{eq:lyapunov} needs $DF(\vs)\,\delta\vs$, the image of a
+small displacement under one kick. Write the map \eqref{eq:map} as $F(\vs) = R_z\big(kZ'(\vs)\big)\,\vs'(\vs)$ with
+$\vs' = R_y(p)\,\vs$ and $Z' = (\vs')_z$, and vary $\vs \to \vs + \delta\vs$.
+\begin{enumerate}
+  \item The rotation is linear: $\delta\vs' = R_y(p)\,\delta\vs$, and $\delta Z' = (\delta\vs')_z$.
+  \item The torsion depends on $\vs'$ twice, through the vector it rotates and through its angle $kZ'$. By the
+  product rule,
+  \[ \delta\big[R_z(kZ')\,\vs'\big] = R_z(kZ')\,\delta\vs' + \frac{dR_z}{d\alpha}\Big|_{\alpha = kZ'}\vs'\;k\,\delta Z' . \]
+  \item With $\frac{d}{d\alpha}R_z(\alpha)\bm v = \hat{\bm z}\times R_z(\alpha)\bm v$ (\cref{sec:precession}) and
+  $R_z(kZ')\vs' = \vs_{n+1}$, the last term is $k\,\delta Z'\,\hat{\bm z}\times\vs_{n+1}$.
+\end{enumerate}
+Hence
+\begin{equation}\label{eq:tangent}
+  \boxed{\delta\vs_{n+1} = DF(\vs_n)\,\delta\vs_n = R_z(kZ')\,\delta\vs' + k\,\delta Z'\;\hat{\bm z}\times\vs_{n+1},
+  \qquad \delta\vs' = R_y(p)\,\delta\vs_n .}
+\end{equation}
+(For $p = \pi/2$ and the points of the period-4 orbit this reduces to the $DT$ used in \cref{sec:pi2}.) The image is
+again tangent to the sphere. If $\vs_n\cdot\delta\vs_n = 0$, then, because rotations preserve dot products and $\hat{\bm
+z}\times\vs_{n+1}$ is perpendicular to $\vs_{n+1}$,
+\begin{equation*}
+  \vs_{n+1}\cdot\delta\vs_{n+1} = \big(R_z\vs'\big)\cdot\big(R_z\delta\vs'\big) = \vs'\cdot\delta\vs' = \vs_n\cdot\delta\vs_n = 0 .
+\end{equation*}
+
+\paragraph{The algorithm.} $\delta\vs_n = M_n\delta\vs_0$ grows like $e^{\Lambda n}$, and for $\Lambda \approx 0.4$ it
+overflows double precision ($\approx 10^{308}$) after about $\ln(10^{308})/0.4 \approx 1800$ kicks. Since
+\eqref{eq:tangent} is linear in $\delta\vs$, the vector can be rescaled at any time without changing its direction.
+Benettin's algorithm does exactly this:
+\begin{enumerate}
+  \item start from a unit tangent vector $\delta\vs_0$, $\vs_0\cdot\delta\vs_0 = 0$;
+  \item apply \eqref{eq:tangent} and \eqref{eq:map} together, kick by kick;
+  \item every $m$ kicks, measure the length $d_j = \|\delta\vs\|$ and rescale, $\delta\vs \to \delta\vs/d_j$;
+  \item after $N$ kicks, $\Lambda_N = \frac1N\sum_j \ln d_j$.
+\end{enumerate}
+Because every rescaling only divides by the length just measured, $\prod_j d_j = \|M_N\,\delta\vs_0\|$, so $\Lambda_N$
+is exactly \eqref{eq:lyapunov} evaluated at the finite time $N$, without overflow. $\Lambda_N$ converges to $\Lambda$ as
+$N\to\infty$. At finite $N$ there are two kinds of error. The first part of the evolution, before $\delta\vs$ has turned
+into the most unstable direction, contributes a term of order $1/N$. On regular orbits $\|\delta\vs\|$ grows like $n$,
+so $\Lambda_N \approx \ln N/N$, small but not zero.
+
+\paragraph{Result for $k = 3$.} \Cref{fig:lyapunov-map} shows $\Lambda_N$ ($N = 2000$) for an $80\times80$ grid of
+initial conditions. The islands of \cref{fig:portraits} appear as regions with $\Lambda_N \approx 0$, and the chaotic
+sea has a nearly uniform value $\Lambda \approx 0.33$, as it must, since a single chaotic orbit visits the whole sea.
+(The larger slope $\approx 0.47$ of \cref{fig:divergence} is a local rate over the first $40$ kicks near the
+pole $+\hat{\bm y}$, where the stretching $\ln\lambda_u \approx 0.96$ is stronger than the average.)
+
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=0.75\textwidth]{figures/lyapunov_map.pdf}
+  \caption{Finite-time Lyapunov exponent $\Lambda_N$ ($N = 2000$ kicks, Benettin algorithm with rescaling every kick)
+  of each initial condition of an $80\times80$ equal-area grid, $p = \pi/2$, $k = 3$. Dark: regular islands
+  ($\Lambda_N\approx0$). Bright: chaotic sea ($\Lambda\approx0.33$).}
+  \label{fig:lyapunov-map}
 \end{figure}
 
 %---------------------------------------------------------------------
@@ -999,7 +1055,10 @@ OpenMP. The default configuration ($20\times20$ grid, $500$ kicks) runs in under
 \section{Code structure}\label{sec:code}
 
 The physics is in Fortran (\texttt{src/}); the Fortran code writes plot-ready files, and Python only reads and plots
-them. \Cref{fig:flow} shows the data flow and \cref{tab:modules} maps each module to the equations it implements.
+them. \Cref{fig:flow} shows the data flow and \cref{tab:modules} maps each module to the equations it implements. In
+the source, the header comment of every module and function cites the equations it implements by number and by
+\LaTeX{} label, e.g.\ \texttt{! ... eq.~(20) [eq:map]}, so the reference can be found again with \texttt{grep} if the
+numbering of these notes changes.
 
 \begin{figure}[!htbp]
   \centering
@@ -1013,20 +1072,24 @@ them. \Cref{fig:flow} shows the data flow and \cref{tab:modules} maps each modul
     \node[box, left=of evo] (map) {\texttt{map\_mod}\\ \texttt{kick}: eq.~\eqref{eq:map}};
     \node[box, right=of evo] (io) {\texttt{io\_mod}\\ $\phi = \operatorname{atan2}(Y,X)$};
     \node[box, below=of io] (en) {\texttt{energy\_mod}\\ eq.~\eqref{eq:energy}};
-    \node[file, right=of io] (out) {trajectory.dat\\ phase\_space.dat\\ energy.dat};
+    \node[box, below=of evo] (lya) {\texttt{lyapunov\_mod}\\ $\Lambda$: eqs.~\eqref{eq:tangent}, \eqref{eq:lyapunov}};
+    \node[file, right=of io] (out) {trajectory.dat\\ phase\_space.dat\\ energy.dat\\ lyapunov.dat};
     \node[box, below=of out] (py) {\texttt{post\_processor.py}\\ plots only};
     \draw[->] (nml) -- (cfg);
     \draw[->] (cfg) -- (init);
     \draw[->] (init) -- (evo);
     \draw[->] (map) -- (evo);
     \draw[->] (evo) -- (io);
+    \draw[->] (map) |- (lya);
+    \draw[->] (lya) -- (io);
     \draw[->] (en) -- (io);
     \draw[->] (io) -- (out);
     \draw[->] (out) -- (py);
     \node[font=\small\itshape, above=0.15cm of cfg, xshift=1.6cm] {\texttt{main.f90} calls these in order};
   \end{tikzpicture}
   \caption{Data flow of the program. \texttt{main.f90} reads the configuration, builds the initial conditions,
-  evolves them and writes the output.}
+  evolves them and writes the output. If \texttt{\&lyapunov} is enabled, it also computes $\Lambda$ for every initial
+  condition.}
   \label{fig:flow}
 \end{figure}
 
@@ -1040,25 +1103,29 @@ them. \Cref{fig:flow} shows the data flow and \cref{tab:modules} maps each modul
     \texttt{kinds\_mod.f90} & working precision \texttt{wp} (double), constants $\pi$, $2\pi$ & -- \\
     \texttt{config\_mod.f90} & type \texttt{config\_t}; reads the namelist groups, checks values & parameters $p$, $k$ of \eqref{eq:H} \\
     \texttt{init\_mod.f90} & \texttt{initial\_conditions}: \texttt{single} / \texttt{grid} / \texttt{random}; \texttt{spherical\_to\_cartesian} & \eqref{eq:unit}; equal-area grid from \eqref{eq:area} \\
-    \texttt{map\_mod.f90} & pure function \texttt{kick(s, p, k)}: one period & \eqref{eq:rotation-y}, \eqref{eq:torsion}, \eqref{eq:map} \\
+    \texttt{map\_mod.f90} & pure functions \texttt{kick(s, p, k)}: one period; \texttt{kick\_tangent(s, ds, p, k)}: its
+    tangent map; \texttt{rotate\_y}, \texttt{rotate\_z}: the two rotations & \eqref{eq:rotation-y}, \eqref{eq:torsion}, \eqref{eq:map}, \eqref{eq:tangent} \\
     \texttt{evolve\_mod.f90} & iterates \texttt{kick} for all initial conditions (OpenMP), transient and \texttt{save\_every} & $\vs_n = F^n(\vs_0)$ \\
+    \texttt{lyapunov\_mod.f90} & \texttt{lyapunov}: Benettin algorithm for every initial condition (OpenMP) & \eqref{eq:lyapunov}, \cref{sec:benettin} \\
     \texttt{energy\_mod.f90} & pure function \texttt{energy(s, p, k)} $\to [pY,\ \frac k2 Z^2,\ \text{total}]$ & \eqref{eq:energy} \\
-    \texttt{io\_mod.f90} & writes the three ASCII files; computes $\phi = \operatorname{atan2}(Y,X) \in (-\pi,\pi]$ & coordinates of \cref{sec:canonical} \\
-    \texttt{main.f90} & driver: \texttt{read\_config} $\to$ \texttt{initial\_conditions} $\to$ \texttt{evolve} $\to$ \texttt{write\_results} & -- \\
-    \texttt{post\_processor.py} (in \texttt{scripts/}) & class \texttt{PostProcessor}: phase-space plot $(\phi, Z)$, 3D plot on the sphere & -- \\
+    \texttt{io\_mod.f90} & writes the ASCII output files; computes $\phi = \operatorname{atan2}(Y,X) \in (-\pi,\pi]$ & coordinates of \cref{sec:canonical} \\
+    \texttt{main.f90} & driver: \texttt{read\_config} $\to$ \texttt{initial\_conditions} $\to$ \texttt{evolve} $\to$ \texttt{write\_results} ($\to$ \texttt{lyapunov} $\to$ \texttt{write\_lyapunov}) & -- \\
+    \texttt{post\_processor.py} (in \texttt{scripts/}) & class \texttt{PostProcessor}: phase-space plot $(\phi, Z)$, 3D plot on the sphere, map of $\Lambda$ & -- \\
     \bottomrule
   \end{tabular}
   \caption{Files of the code and the equations they implement.}
   \label{tab:modules}
 \end{table}
 
-\paragraph{The map.} The function \texttt{kick} in \texttt{map\_mod.f90} is a line-by-line transcription of
-\eqref{eq:rotation-y} (lines 18--22 of the listing) and \eqref{eq:torsion} (lines 24--28):
-\lstinputlisting[firstline=9, lastline=29, firstnumber=9]{../src/map_mod.f90}
+\paragraph{The map.} \texttt{kick} in \texttt{map\_mod.f90} applies \texttt{rotate\_y}, the rotation
+\eqref{eq:rotation-y}, and then \texttt{rotate\_z} with the angle $kZ'$, the torsion \eqref{eq:torsion}.
+\texttt{kick\_tangent} is the tangent map \eqref{eq:tangent}; its last line is $R_z(kZ')\,\delta\vs' + k\,\delta Z'\,
+\hat{\bm z}\times\vs_{n+1}$, with $\hat{\bm z}\times\vs = (-Y, X, 0)$:
+\lstinputlisting[firstline=13, lastline=44, firstnumber=13]{../src/map_mod.f90}
 
 \paragraph{The equal-area grid.} \texttt{grid\_points} in \texttt{init\_mod.f90} places cell centres uniformly in
 $Z$ and $\phi$, as required by \eqref{eq:area}:
-\lstinputlisting[firstline=45, lastline=52, firstnumber=45]{../src/init_mod.f90}
+\lstinputlisting[firstline=50, lastline=57, firstnumber=50]{../src/init_mod.f90}
 
 \subsection{Parameters}
 
@@ -1079,6 +1146,8 @@ command-line argument). Missing groups or variables keep their defaults.
    & \texttt{n\_theta}, \texttt{n\_phi} & grid size in $Z=\cos\theta$ and in $\phi$ \\
    & \texttt{n\_random}, \texttt{seed} & number of random points and seed \\
   \texttt{\&output} & \texttt{out\_dir} & output directory \\
+  \texttt{\&lyapunov} & \texttt{enabled} & compute $\Lambda_N$ ($N$ = \texttt{n\_kicks}) for every initial condition \\
+   & \texttt{n\_renorm} & rescale $\delta\vs$ every \texttt{n\_renorm} kicks ($m$ in \cref{sec:benettin}) \\
   \bottomrule
 \end{tabular}
 \end{center}
@@ -1086,8 +1155,9 @@ command-line argument). Missing groups or variables keep their defaults.
 \subsection{Output files}
 
 All files are ASCII, start with a header line \texttt{\# p = \dots, k = \dots} and a column line, and contain one
-block per initial condition separated by a blank line. The three files have the same row order, so row $r$ of each
-file refers to the same point $\vs_n$.
+block per initial condition separated by a blank line. The first three files have the same row order, so row $r$ of
+each refers to the same point $\vs_n$. \texttt{lyapunov.dat} (written only if \texttt{\&lyapunov} is enabled) has one line
+per initial condition.
 \begin{center}
 \small
 \begin{tabular}{ll}
@@ -1097,6 +1167,7 @@ file refers to the same point $\vs_n$.
   \texttt{trajectory.dat} & orbit index \texttt{ic}, kick \texttt{n}, $X$, $Y$, $Z$ \\
   \texttt{phase\_space.dat} & \texttt{ic}, \texttt{n}, $\phi$, $Z$ \quad (canonical coordinates, \cref{sec:canonical}) \\
   \texttt{energy.dat} & $pY$, $\frac k2 Z^2$, total \quad (\cref{eq:energy}) \\
+  \texttt{lyapunov.dat} & \texttt{ic}, $\phi_0$, $Z_0$ (initial point), $\Lambda_N$ \quad (\cref{sec:benettin}) \\
   \bottomrule
 \end{tabular}
 \end{center}
@@ -1108,6 +1179,7 @@ make                                   # build/kicked_top
 ./build/kicked_top config.nml          # or: make run
 python scripts/post_processor.py       # output/phase_space.png
 python scripts/post_processor.py --sphere --show
+python scripts/post_processor.py --lyapunov    # output/lyapunov.png
 make figures                           # recompute the figures of these notes
 make docs                              # compile docs/kicked_top_notes.tex
 \end{lstlisting}
@@ -1126,23 +1198,29 @@ The following checks were carried out on the code:
   \texttt{trajectory.dat} to $10^{-15}$.
   \item The fixed points, traces and symmetry of \cref{sec:symmetry,sec:stability} were checked against the map
   numerically, and they agree with the islands in \cref{fig:portraits}.
+  \item \texttt{kick\_tangent} agrees with a centred finite difference of \texttt{kick} to $10^{-10}$ (relative, for
+  $\|\delta\vs\| \approx 10^{-7}$).
+  \item $\Lambda$ at the hyperbolic pole $+\hat{\bm y}$, $k = 3$: the $1/N$ term of \cref{sec:benettin} cancels in
+  $(30\Lambda_{30} - 20\Lambda_{20})/10 = 0.96242365$, which agrees with the exact $\ln\frac{3+\sqrt5}{2} =
+  0.96242365$ (\cref{sec:lyapunov}) to $3\times10^{-9}$. (Longer runs leave the pole, because round-off moves the orbit
+  off it.)
+  \item $k = 0$: $|\Lambda_N| < 10^{-17}$ for every initial condition, as it must be for a pure rotation.
 \end{itemize}
 
 \subsection{Extending the code}\label{sec:extend}
 
 New functionality follows the same pattern: one module with its own namelist group and an on/off switch, called from
-\texttt{main.f90}. For example, a Lyapunov exponent module would
+\texttt{main.f90}. The Lyapunov exponent is an example:
 \begin{enumerate}
-  \item add a pure function for the tangent map $DF(\vs)\,\delta\vs$ (the derivative of \eqref{eq:map}) next to
-  \texttt{kick} in \texttt{map\_mod};
-  \item add \texttt{lyapunov\_mod.f90}, which evolves $(\vs, \delta\vs)$ together, renormalises $\delta\vs$ every
-  kick and accumulates $\ln\|\delta\vs\|$ to estimate \eqref{eq:lyapunov} for every initial condition;
-  \item add a group \texttt{\&analysis lyapunov = .true. /} to the namelist and a file \texttt{lyapunov.dat}
-  (\texttt{ic}, $\Lambda$) written by \texttt{io\_mod}, which Python can plot as a colour map over the initial
-  conditions.
+  \item \texttt{map\_mod} provides the tangent map \texttt{kick\_tangent} \eqref{eq:tangent} next to \texttt{kick},
+  built from the same \texttt{rotate\_y} and \texttt{rotate\_z};
+  \item \texttt{lyapunov\_mod.f90} evolves $(\vs, \delta\vs)$ together and implements the algorithm of
+  \cref{sec:benettin};
+  \item the namelist group \texttt{\&lyapunov} switches it on, \texttt{io\_mod} writes \texttt{lyapunov.dat}, and the
+  method \texttt{plot\_lyapunov} of \texttt{PostProcessor} plots it.
 \end{enumerate}
-Other variants (a different kick axis, several kicks per period, dissipation) only replace \texttt{kick}. The rest
-of the program does not depend on the form of the map.
+Other variants (a different kick axis, several kicks per period, dissipation) only replace \texttt{kick} and
+\texttt{kick\_tangent}. The rest of the program does not depend on the form of the map.
 
 %=====================================================================
 \begin{thebibliography}{9}

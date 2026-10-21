@@ -16,10 +16,12 @@ plt.rcParams.update({"font.size": 10, "axes.labelsize": 11, "savefig.bbox": "tig
 
 
 def load(run, name):
+    """Numeric data of output file name of run (a subdirectory of data/)."""
     return np.loadtxt(DATA_DIR / run / name)
 
 
 def phase_axes(ax):
+    """Axes limits, ticks and labels of a (phi, Z) phase portrait."""
     ax.set_xlim(-np.pi, np.pi)
     ax.set_ylim(-1, 1)
     ax.set_xticks([-np.pi, -np.pi / 2, 0, np.pi / 2, np.pi], [r"$-\pi$", r"$-\pi/2$", "0", r"$\pi/2$", r"$\pi$"])
@@ -28,6 +30,7 @@ def phase_axes(ax):
 
 
 def portraits():
+    """Fig. 5 [fig:portraits]: phase portraits for p = pi/2 and six values of k."""
     fig, axes = plt.subplots(2, 3, figsize=(12, 6.5), sharex=True, sharey=True)
     for ax, k in zip(axes.flat, PORTRAIT_K):
         d = load(f"portrait_k{k}", "phase_space.dat")
@@ -39,6 +42,7 @@ def portraits():
 
 
 def near_flow():
+    """Fig. 3 [fig:near-flow]: small p, k; colour = E of eq. (23)."""
     d = load("near_flow", "phase_space.dat")
     e = load("near_flow", "energy.dat")
     fig, ax = plt.subplots(figsize=(7, 4))
@@ -49,6 +53,7 @@ def near_flow():
 
 
 def sphere():
+    """Fig. 7 [fig:sphere]: the k = 3 portrait on the unit sphere."""
     d = load("portrait_k3.0", "trajectory.dat")
     fig = plt.figure(figsize=(5, 5))
     ax = fig.add_subplot(projection="3d")
@@ -62,6 +67,7 @@ def sphere():
 
 
 def energy():
+    """Fig. 4 [fig:energy]: energy terms of eq. (23) along a regular and a chaotic orbit."""
     fig, axes = plt.subplots(1, 2, figsize=(11, 3.5), sharey=True)
     for ax, run, title in zip(axes, ["single_regular", "single_chaotic"], ["regular orbit", "chaotic orbit"]):
         e = load(run, "energy.dat")
@@ -78,6 +84,7 @@ def energy():
 
 
 def divergence():
+    """Fig. 8 [fig:divergence]: distance between two nearby orbits."""
     fig, ax = plt.subplots(figsize=(6, 4))
     for run, label in [("single_regular", "regular"), ("single_chaotic", "chaotic")]:
         a = load(run, "trajectory.dat")
@@ -91,6 +98,7 @@ def divergence():
 
 
 def single_orbits():
+    """Fig. 6 [fig:single-orbits]: one regular and one chaotic orbit for k = 3."""
     d = load("portrait_k3.0", "phase_space.dat")
     fig, ax = plt.subplots(figsize=(7, 4))
     ax.scatter(d[:, 2], d[:, 3], c="0.8", s=0.05, rasterized=True)
@@ -102,6 +110,18 @@ def single_orbits():
     fig.savefig(FIG_DIR / "single_orbits.pdf", dpi=150)
 
 
+def lyapunov_map():
+    """Fig. 9 [fig:lyapunov-map]: Lyapunov exponent of each initial condition, k = 3."""
+    d = load("lyapunov_k3.0", "lyapunov.dat")
+    fig, ax = plt.subplots(figsize=(7, 4))
+    sc = ax.scatter(d[:, 1], d[:, 2], c=d[:, 3], s=3, marker="s", cmap="magma", rasterized=True)
+    phase_axes(ax)
+    ax.set_xlabel(r"$\phi_0$")
+    ax.set_ylabel(r"$Z_0=\cos\theta_0$")
+    fig.colorbar(sc, ax=ax, label=r"$\Lambda$")
+    fig.savefig(FIG_DIR / "lyapunov_map.pdf", dpi=150)
+
+
 if __name__ == "__main__":
     portraits()
     near_flow()
@@ -109,3 +129,4 @@ if __name__ == "__main__":
     energy()
     divergence()
     single_orbits()
+    lyapunov_map()

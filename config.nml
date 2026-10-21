@@ -25,3 +25,8 @@
 &output
   out_dir = 'output'
 /
+
+&lyapunov
+  enabled  = .false.  ! compute the largest Lyapunov exponent of every initial condition
+  n_renorm = 1        ! rescale the tangent vector every n_renorm kicks
+/

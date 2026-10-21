@@ -1,3 +1,5 @@
+! Initial conditions s0 on the unit sphere.
+! Lecture notes: Sec. 10 (initial conditions), eqs. (13) [eq:unit] and (9) [eq:area].
 module init_mod
   use kinds_mod, only: wp, pi, two_pi
   use config_mod, only: config_t
@@ -7,7 +9,8 @@ module init_mod
 
 contains
 
-  ! Returns initial points s0(3, n_ic) on the unit sphere.
+  ! Returns the initial points s0(3, n_ic) selected by cfg%mode:
+  !   'single': one point (theta0, phi0); 'grid': equal-area grid; 'random': uniform random points.
   subroutine initial_conditions(cfg, s0)
     type(config_t), intent(in) :: cfg
     real(wp), allocatable, intent(out) :: s0(:,:)
@@ -23,6 +26,7 @@ contains
     end select
   end subroutine initial_conditions
 
+  ! The unit vector s = (sin(theta)cos(phi), sin(theta)sin(phi), cos(theta)), eq. (13) [eq:unit].
   pure function spherical_to_cartesian(theta, phi) result(s)
     real(wp), intent(in) :: theta
     real(wp), intent(in) :: phi
@@ -31,8 +35,9 @@ contains
     s = [sin(theta)*cos(phi), sin(theta)*sin(phi), cos(theta)]
   end function spherical_to_cartesian
 
-  ! Cell centres of a uniform grid in the canonical coordinates (phi, Z=cos(theta)),
-  ! i.e. equal-area sampling of the sphere.
+  ! Cell centres of an n_theta x n_phi grid that is uniform in the canonical
+  ! coordinates (phi, Z=cos(theta)) of Sec. 1.3 [sec:canonical]. By eq. (9)
+  ! [eq:area] every cell has the same area on the sphere.
   subroutine grid_points(n_theta, n_phi, s0)
     integer, intent(in) :: n_theta
     integer, intent(in) :: n_phi
@@ -52,7 +57,8 @@ contains
     end do
   end subroutine grid_points
 
-  ! Points uniformly distributed on the sphere (Z and phi uniform).
+  ! n_random points uniformly distributed on the sphere: Z and phi uniform,
+  ! which by eq. (9) [eq:area] is the uniform distribution.
   subroutine random_points(n_random, seed, s0)
     integer, intent(in) :: n_random
     integer, intent(in) :: seed

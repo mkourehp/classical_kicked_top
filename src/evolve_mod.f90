@@ -1,3 +1,5 @@
+! Iteration of the stroboscopic map, s_n = F^n(s_0), for all initial conditions.
+! Lecture notes: Sec. 3 [sec:map] (the map) and Sec. 10 (recording, OpenMP).
 module evolve_mod
   use kinds_mod, only: wp
   use config_mod, only: config_t
@@ -8,7 +10,8 @@ module evolve_mod
 
 contains
 
-  ! Iterates the map for every initial condition. After n_transient discarded
+  ! Iterates kick, eq. (20) [eq:map], for every initial condition (in parallel
+  ! over initial conditions with OpenMP). After n_transient discarded
   ! kicks, the state is stored at kicks 0, save_every, 2*save_every, ... <= n_kicks.
   ! orbit has shape (3, n_saved, n_ic).
   subroutine evolve(cfg, s0, orbit)
