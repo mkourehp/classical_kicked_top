@@ -1,0 +1,34 @@
+! Quantum kicked top: U = exp(-i k/(2j) Jz^2) exp(-i p Jy), spin j (integer or half-integer).
+! Angles in radians.
+
+&system
+  p = 1.5707963267948966   ! pi/2
+  k = 3.0
+  j = 50                   ! Hilbert-space dimension 2j+1
+/
+
+&simulation
+  n_kicks = 100
+/
+
+&initial
+  theta0 = 2.25   ! centre of the initial spin coherent state (polar angle, [0, pi])
+  phi0   = 0.63   ! (azimuth)
+/
+
+&husimi
+  enabled = .true.
+  n_theta = 100              ! grid points in Z = cos(theta) (equal-area grid)
+  n_phi   = 200              ! grid points in phi
+  kicks   = 0, 10, 50, 100   ! kicks at which the Husimi distribution is written
+/
+
+&spectrum
+  enabled = .true.   ! quasienergies of U and their spacing statistics
+  n_bins  = 30
+  s_max   = 3.0
+/
+
+&output
+  out_dir = 'output_quantum'
+/

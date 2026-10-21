@@ -4,6 +4,7 @@ module io_mod
   use kinds_mod, only: wp
   use config_mod, only: config_t
   use energy_mod, only: energy
+  use io_utils_mod, only: make_dir
   implicit none
   private
   public :: write_results, write_lyapunov
@@ -27,7 +28,7 @@ contains
     character(len=:), allocatable :: title
     integer :: u_traj, u_ps, u_en, ic, isave, n
 
-    call execute_command_line('mkdir -p "'//trim(cfg%out_dir)//'"')
+    call make_dir(cfg%out_dir)
     title = header(cfg)
 
     open(newunit=u_traj, file=trim(cfg%out_dir)//'/'//trajectory_file, status='replace', action='write')
