@@ -987,32 +987,192 @@ pole $+\hat{\bm y}$, where the stretching $\ln\lambda_u \approx 0.96$ is stronge
 \end{figure}
 
 %---------------------------------------------------------------------
-\section{Outlook: the quantum kicked top}\label{sec:quantum}
+%=====================================================================
+\part{The quantum kicked top}\label{part:quantum}
+%=====================================================================
 
-The kicked top was introduced by Haake, Ku\'s and Scharf \cite{HKS1987} as a model for \emph{quantum} chaos. In
-quantum mechanics the components of $\vJ$ become operators $\hat J_x, \hat J_y, \hat J_z$ (a hat marks an operator in
-this section) with $[\hat J_a, \hat J_b] = i\,\epsilon_{abc}\hat J_c$ in units $\hbar = 1$. They act on a
-$(2j+1)$-dimensional space of state vectors $|\psi\rangle$, and $\hat{\vJ}^2 = j(j+1)$. The state obeys the Schrödinger
-equation $i\,\frac{d}{dt}|\psi\rangle = \hat H(t)|\psi\rangle$ with $\hat H$ given by \eqref{eq:H}. Between kicks $\hat H
-= p\hat J_y$ is constant, and the evolution over the unit time is $\exp(-ip\hat J_y)$. Across a kick the $\delta$ term
-dominates, as in Step 2 of \cref{sec:map}, and gives $\exp\!\big(-i\frac{k}{2j}\hat J_z^2\big)$. One period is
-therefore
-\begin{equation}
-  \hat U = \exp\!\Big(-i\frac{k}{2j}\hat J_z^2\Big)\exp\!\big(-ip\hat J_y\big), \qquad |\psi_{n+1}\rangle = \hat U|\psi_n\rangle ,
+\section{Quantum spin}\label{sec:quantum}
+
+In quantum mechanics the three components of the angular momentum become Hermitian operators $\hat J_x, \hat J_y,
+\hat J_z$ (in this part a hat marks an operator, except on bold unit vectors). We use units with $\hbar = 1$. The
+classical bracket \eqref{eq:J-algebra} is replaced by the commutator $[\hat A, \hat B] = \hat A\hat B - \hat B\hat A$
+with the rule $\PB{\cdot}{\cdot} \to -i[\cdot,\cdot]$:
+\begin{equation}\label{eq:q-algebra}
+  [\hat J_a, \hat J_b] = i\,\epsilon_{abc}\,\hat J_c .
 \end{equation}
-the quantum counterpart of \eqref{eq:map}: first the rotation, then the kick. In terms of $\hat\vs = \hat\vJ/j$ the
-commutator is $[\hat s_x, \hat s_y] = [\hat J_x,\hat J_y]/j^2 = \frac{i}{j}\hat s_z$, so $1/j$ acts as an effective Planck
-constant and the classical map of these notes is the limit $j\to\infty$. A spin coherent state, a minimum-uncertainty
-wave packet of width of order $1/\sqrt j$ centred at a point $\vs$ of the sphere, follows the classical orbit until it
-spreads. On a chaotic orbit the width grows like $e^{\Lambda n}/\sqrt j$ and becomes of order $1$ after $n \sim \ln
-j/(2\Lambda)$ kicks. On regular orbits the spreading is much slower.
 
-The classical phase-space structure leaves fingerprints in the quantum system. Examples include the statistics of
-the eigenphases of $\hat U$ (Poisson-like for regular, random-matrix-like for chaotic dynamics), the way eigenstates
-concentrate on classical islands or spread over the chaotic sea, and the entanglement generated when the spin is made
-of many qubits. The book by Haake \cite{Haake} is the standard reference. The kicked top has been realised
-experimentally with the hyperfine spin of cesium atoms \cite{Chaudhury2009} and with superconducting qubits
-\cite{Neill2016}.
+\paragraph{The basis $|j,m\rangle$.} $\hat J^2 = \hat J_x^2 + \hat J_y^2 + \hat J_z^2$ commutes with every $\hat J_a$
+(the quantum version of the Casimir of \cref{sec:angmom}), so $\hat J^2$ and $\hat J_z$ have common eigenvectors.
+The standard result of the angular-momentum algebra is
+\begin{equation}\label{eq:jm-basis}
+  \hat J^2|j,m\rangle = j(j+1)\,|j,m\rangle, \qquad \hat J_z|j,m\rangle = m\,|j,m\rangle, \qquad
+  m = j, j-1, \dots, -j,
+\end{equation}
+where $j$ is a fixed integer or half-integer. The space of states is therefore $(2j+1)$-dimensional, and a state is a
+column vector $|\psi\rangle = \sum_m \psi_m|j,m\rangle$ of $2j+1$ complex numbers $\psi_m$ with $\sum_m|\psi_m|^2 = 1$.
+
+\paragraph{Ladder operators.} $\hat J_\pm = \hat J_x \pm i\hat J_y$ raise and lower $m$ by one:
+\begin{equation}\label{eq:ladder}
+  \hat J_+|j,m\rangle = a(m)\,|j,m+1\rangle, \qquad \hat J_-|j,m+1\rangle = a(m)\,|j,m\rangle, \qquad
+  a(m) = \sqrt{j(j+1) - m(m+1)} .
+\end{equation}
+(Derivation of $a(m)$: $\hat J_-\hat J_+ = \hat J^2 - \hat J_z^2 - \hat J_z$ by \eqref{eq:q-algebra}, so
+$\|\hat J_+|j,m\rangle\|^2 = \langle j,m|\hat J_-\hat J_+|j,m\rangle = j(j+1) - m^2 - m$.) Hence $\hat J_y = (\hat J_+ -
+\hat J_-)/(2i)$ has the only non-zero matrix elements
+\begin{equation}\label{eq:jy-elements}
+  \langle j,m+1|\hat J_y|j,m\rangle = -\frac{i}{2}\,a(m), \qquad \langle j,m|\hat J_y|j,m+1\rangle = +\frac{i}{2}\,a(m),
+\end{equation}
+and $\langle\hat J_+\rangle = \langle\hat J_x\rangle + i\langle\hat J_y\rangle = \sum_m \psi_{m+1}^*\,a(m)\,\psi_m$
+gives the two transverse expectation values ($^*$ is complex conjugation).
+
+\section{The Floquet operator}\label{sec:floquet}
+
+\paragraph{Derivation.} The state obeys the Schrödinger equation $i\,\frac{d}{dt}|\psi\rangle = \hat H(t)|\psi\rangle$
+with $\hat H(t)$ the operator version of \eqref{eq:H}. We integrate it over one period exactly as in \cref{sec:map}.
+\begin{enumerate}
+  \item For $n < t < n+1$, $\hat H = p\hat J_y$ does not depend on time, so $|\psi(t)\rangle = e^{-i(t-n)p\hat
+  J_y}|\psi(n^+)\rangle$. After the unit time, $|\psi\rangle \to \hat R\,|\psi\rangle$ with $\hat R = e^{-ip\hat J_y}$.
+  \item Across the kick only the $\delta$ term matters (the same argument as Step 2 of \cref{sec:map}):
+  $i\frac{d}{dt}|\psi\rangle = \frac{k}{2j}\hat J_z^2\,\delta(t-n-1)|\psi\rangle$. All operators involved commute
+  with each other, so the solution is the exponential of the integral,
+  $|\psi\rangle \to \hat K|\psi\rangle$ with $\hat K = e^{-i\frac{k}{2j}\hat J_z^2}$.
+\end{enumerate}
+One period is therefore
+\begin{equation}\label{eq:floquet}
+  \boxed{\hat U = \hat K\hat R = \exp\!\Big(-i\frac{k}{2j}\hat J_z^2\Big)\exp\!\big(-ip\hat J_y\big), \qquad
+  |\psi_{n+1}\rangle = \hat U|\psi_n\rangle ,}
+\end{equation}
+first the rotation, then the kick, as in \eqref{eq:map}. In the basis \eqref{eq:jm-basis} the kick is diagonal,
+$\hat K|j,m\rangle = e^{-ikm^2/(2j)}|j,m\rangle$. $\hat U$ is unitary ($\hat U^\dagger\hat U = 1$, $^\dagger$ the conjugate
+transpose) because it is a product of exponentials of $-i$ times Hermitian operators; hence $\langle\psi_n|\psi_n\rangle$
+is conserved.
+
+\paragraph{The rotation in matrix form.} $\hat J_y$ is Hermitian, so it has an orthonormal basis of eigenvectors,
+$\hat J_y = \hat V\,\mathrm{diag}(\mu_l)\,\hat V^\dagger$ with eigenvalues $\mu_l = -j, -j+1, \dots, j$ (the same
+spectrum as $\hat J_z$, since $\hat J_y$ is $\hat J_z$ rotated). Then
+\begin{equation}\label{eq:exp-jy}
+  e^{-i\alpha\hat J_y} = \hat V\,\mathrm{diag}\big(e^{-i\alpha\mu_l}\big)\,\hat V^\dagger
+\end{equation}
+for any angle $\alpha$, because $(\hat V D\hat V^\dagger)^n = \hat V D^n\hat V^\dagger$ term by term in the exponential
+series.
+
+\paragraph{The classical limit.} Write $\hat{\bm s} = \hat{\vJ}/j$. Then \eqref{eq:q-algebra} becomes $[\hat s_a, \hat
+s_b] = \frac{i}{j}\,\epsilon_{abc}\,\hat s_c$: the components of $\hat{\bm s}$ commute in the limit $j\to\infty$, and
+$1/j$ plays the role of an effective Planck constant. In the Heisenberg picture an operator evolves as $\hat A \to
+\hat U^\dagger\hat A\hat U$. For the rotation, $\hat R^\dagger\hat J_a\hat R = \sum_b R_y(p)_{ab}\hat J_b$ (the quantum
+rotation rotates the vector operator exactly as \eqref{eq:rotation-y}). For the kick, $\hat J_z$ commutes with $\hat K$,
+and for $\hat J_+$, using $\hat J_+ f(\hat J_z) = f(\hat J_z - 1)\hat J_+$,
+\begin{equation*}
+  \hat K^\dagger\hat J_+\hat K = e^{i\frac{k}{2j}\hat J_z^2}\,e^{-i\frac{k}{2j}(\hat J_z-1)^2}\,\hat J_+
+  = e^{i\frac{k}{2j}(2\hat J_z - 1)}\,\hat J_+ = e^{ik\hat s_z - \frac{ik}{2j}}\,\hat J_+ ,
+\end{equation*}
+i.e.\ $\hat J_x + i\hat J_y$ is rotated about $z$ by the angle $k\hat s_z - k/(2j)$. For $j\to\infty$ this is the
+torsion \eqref{eq:torsion} with angle $kZ$. So the Heisenberg equations of $\hat{\bm s}$ reduce to the classical map
+\eqref{eq:map} when $j\to\infty$.
+
+\section{Spin coherent states and the Husimi distribution}\label{sec:coherent}
+
+\paragraph{Coherent states.} The state $|j,j\rangle$ points along $+\hat{\bm z}$ as sharply as quantum mechanics
+allows: $\langle\hat{\vJ}\rangle = (0,0,j)$. Rotating it to the direction $\bm n(\theta,\phi)$ of \eqref{eq:unit}
+gives the spin coherent state
+\begin{equation}\label{eq:coherent}
+  |\theta,\phi\rangle = e^{-i\phi\hat J_z}\,e^{-i\theta\hat J_y}\,|j,j\rangle
+  = \sum_m \sqrt{\binom{2j}{j-m}}\;\cos^{j+m}\!\tfrac{\theta}{2}\;\sin^{j-m}\!\tfrac{\theta}{2}\;e^{-im\phi}\;|j,m\rangle .
+\end{equation}
+The coefficients follow from writing the spin $j$ as $2j$ spins $\frac12$ all pointing along $\bm n$: each spin
+$\frac12$ is $\cos\frac\theta2|\!\uparrow\rangle + \sin\frac\theta2\,e^{i\phi}|\!\downarrow\rangle$ up to a phase, and
+$|j,m\rangle$ is the normalised symmetric combination of $j+m$ up and $j-m$ down spins; collecting the
+$\binom{2j}{j-m}$ terms gives \eqref{eq:coherent} (the overall phase $e^{-ij\phi}$ is dropped). Three properties:
+\begin{enumerate}
+  \item Normalisation: $\sum_m\binom{2j}{j-m}\cos^{2(j+m)}\frac\theta2\sin^{2(j-m)}\frac\theta2 =
+  (\cos^2\frac\theta2 + \sin^2\frac\theta2)^{2j} = 1$ by the binomial theorem.
+  \item $\langle\theta,\phi|\hat{\vJ}|\theta,\phi\rangle = j\,\bm n(\theta,\phi)$, because the rotations carry
+  $\langle\hat{\vJ}\rangle = j\hat{\bm z}$ to $j\bm n$.
+  \item Width: in $|j,j\rangle$, $\langle\hat J_x^2\rangle = \langle\hat J_y^2\rangle = \frac12(j(j+1) - j^2) =
+  \frac j2$. So the uncertainty of $\hat{\bm s}$ transverse to $\bm n$ is $\sqrt{1/(2j)}$ per direction: a coherent
+  state is a blob of radius $\sim 1/\sqrt j$ on the unit sphere, and the spread
+  $(\langle\hat J^2\rangle - |\langle\hat{\vJ}\rangle|^2)/j^2 = (j(j+1)-j^2)/j^2 = 1/j$.
+\end{enumerate}
+The overlap of two coherent states is $|\langle\bm n|\bm n'\rangle|^2 = \big(\frac{1+\bm n\cdot\bm n'}{2}\big)^{2j}$
+(for $\bm n = \hat{\bm z}$ it is $\cos^{4j}\frac{\theta'}{2}$ from \eqref{eq:coherent}; rotations give the general case).
+
+\paragraph{Husimi distribution.} The Husimi function of a state $|\psi\rangle$ is
+\begin{equation}\label{eq:husimi}
+  Q(\theta,\phi) = |\langle\theta,\phi|\psi\rangle|^2
+  = \Big|\sum_m \sqrt{\tbinom{2j}{j-m}}\cos^{j+m}\!\tfrac{\theta}{2}\sin^{j-m}\!\tfrac{\theta}{2}\,e^{im\phi}\,\psi_m\Big|^2 ,
+\end{equation}
+the probability that $|\psi\rangle$ is found in the coherent state at $(\theta,\phi)$. $0 \le Q \le 1$, and $Q$ is the
+quantum analogue of a density on the classical phase space: plotted in the canonical coordinates $(\phi, Z)$ it can be
+compared directly with the phase portraits of \cref{sec:chaos}. Its normalisation follows from the resolution of the
+identity
+\begin{equation}\label{eq:resolution}
+  \frac{2j+1}{4\pi}\int |\theta,\phi\rangle\langle\theta,\phi|\,d\Omega = \hat 1, \qquad d\Omega = d\phi\,dZ ,
+\end{equation}
+which holds because the left side commutes with all rotations (so it is a multiple of $\hat1$ by Schur's lemma) and its
+trace is $\frac{2j+1}{4\pi}\int d\Omega = 2j+1$. Taking $\langle\psi|\cdot|\psi\rangle$ of \eqref{eq:resolution},
+\begin{equation}\label{eq:husimi-norm}
+  \frac{2j+1}{4\pi}\int Q\,d\Omega = 1 .
+\end{equation}
+For a coherent state centred at $\bm n_0$, $Q = \big(\frac{1+\bm n\cdot\bm n_0}{2}\big)^{2j} \approx e^{-j\,|\bm n -
+\bm n_0|^2/2}$: a Gaussian of width $1/\sqrt j$.
+
+\paragraph{Quantum--classical correspondence and the Ehrenfest time.} Start from a coherent state at $\bm n_0$. As long
+as its blob of size $1/\sqrt j$ stays small, each part of it follows the classical map, so $\langle\hat{\bm s}\rangle_n$
+follows the classical orbit $\bm s_n$ from $\bm n_0$. In a regular island nearby orbits separate only linearly and the
+agreement lasts long. In the chaotic sea the blob is stretched as $e^{\Lambda n}$ (\cref{sec:lyapunov}); it covers a
+region of size one when $j^{-1/2}e^{\Lambda n} \sim 1$, i.e.\ after
+\begin{equation}\label{eq:ehrenfest}
+  n_E \simeq \frac{\ln j}{2\Lambda}
+\end{equation}
+kicks (the Ehrenfest time). After $n_E$, $\langle\hat{\bm s}\rangle$ no longer follows any single orbit and the spread
+grows to order one.
+
+\section{Symmetry and quasienergy spectrum}\label{sec:qspectrum}
+
+\paragraph{Parity.} Let $\hat P = e^{-i\pi\hat J_y}$, the quantum version of $S = R_y(\pi)$ of \eqref{eq:symmetry}.
+$\hat P$ commutes with $\hat R = e^{-ip\hat J_y}$ (both are functions of $\hat J_y$). It also commutes with $\hat K$: $\hat
+P^\dagger\hat J_z\hat P = -\hat J_z$ (rotation by $\pi$ about $y$ reverses $z$), so $\hat P^\dagger\hat J_z^2\hat P = \hat
+J_z^2$ and $\hat P^\dagger\hat K\hat P = \hat K$. Hence $[\hat U, \hat P] = 0$. By \eqref{eq:exp-jy} the eigenvalues of
+$\hat P$ are $e^{-i\pi\mu_l}$; consecutive $\mu_l$ differ by one, so $e^{-i\pi\mu_l}$ alternates in sign along $l$. The
+eigenvectors of $\hat J_y$ with odd $l$ span one parity sector, those with even $l$ the other, and $\hat U$ is
+block-diagonal in this basis.
+
+\paragraph{Quasienergies.} $\hat U$ is unitary, so its eigenvalues lie on the unit circle:
+$\hat U|\varepsilon\rangle = e^{-i\varepsilon}|\varepsilon\rangle$ with quasienergy $\varepsilon \in [-\pi, \pi)$
+(defined modulo $2\pi$, like a phase). In each sector of $N_s$ levels the mean spacing is $2\pi/N_s$ and the density is
+uniform on the circle, so the spacings are unfolded simply as
+\begin{equation}\label{eq:unfold}
+  s_i = \frac{N_s}{2\pi}\,(\varepsilon_{i+1} - \varepsilon_i), \qquad \langle s\rangle = 1 ,
+\end{equation}
+with the last spacing wrapping around the circle.
+
+\paragraph{Spacing statistics.} The distribution $P(s)$ of the $s_i$ within one sector is a standard fingerprint of
+chaos. For regular dynamics levels are typically uncorrelated and $P(s) = e^{-s}$ (Poisson). For chaotic dynamics
+levels repel and $P(s)$ follows random-matrix theory. With an antiunitary (generalised time-reversal) symmetry, which
+the kicked top has, the relevant ensemble is the circular orthogonal ensemble (COE), well approximated by the Wigner
+surmise; without it, the circular unitary ensemble (CUE):
+\begin{equation}\label{eq:wigner}
+  P_{\mathrm{P}}(s) = e^{-s}, \qquad P_{\mathrm{COE}}(s) = \frac{\pi s}{2}\,e^{-\pi s^2/4}, \qquad
+  P_{\mathrm{CUE}}(s) = \frac{32 s^2}{\pi^2}\,e^{-4s^2/\pi} .
+\end{equation}
+A second measure needs no unfolding: the ratio of neighbouring spacings
+\begin{equation}\label{eq:gap-ratio}
+  r_i = \frac{\min(s_i, s_{i+1})}{\max(s_i, s_{i+1})} .
+\end{equation}
+Its mean is $\langle r\rangle = 2\ln2 - 1 \approx 0.386$ for Poisson, $\approx 0.531$ for the COE and $\approx 0.600$
+for the CUE \cite{Atas2013}. Levels of different sectors do not repel, so mixing two sectors spoils both measures;
+that is why the sectors are treated separately.
+
+\paragraph{The special value $p = \pi/2$.} At $p = \pi/2$ the code finds $\langle r\rangle \approx 0.54$ in one parity
+sector but only $\approx 0.41$--$0.44$ in the other, even for strongly chaotic $k$ and $j = 1000$. A value near
+$0.42$ is what a superposition of two independent COE spectra gives, which indicates an additional symmetry of
+$\hat U$ at $p = \pi/2$ that splits that sector again. We have not identified it (the rotations by $\pi$ about $x$ and
+$z$ and by $\pi/2$ about $z$ do not commute with $\hat U$). For spectral statistics we therefore use a generic value,
+$p = 1.7$, where both sectors agree with the COE (\cref{sec:qcode}).
+
+\paragraph{Experiments.} The kicked top was introduced by Haake, Ku\'s and Scharf \cite{HKS1987} as a model of quantum
+chaos; Haake's book \cite{Haake} is the standard reference. It has been realised with the hyperfine spin of cesium
+atoms \cite{Chaudhury2009} and with superconducting qubits \cite{Neill2016}.
 
 
 %=====================================================================
@@ -1223,6 +1383,87 @@ Other variants (a different kick axis, several kicks per period, dissipation) on
 \texttt{kick\_tangent}. The rest of the program does not depend on the form of the map.
 
 %=====================================================================
+
+\section{The quantum code}\label{sec:qcode}
+
+The quantum model is a separate program, \texttt{build/kicked\_top\_quantum} (\texttt{make quantum}), with its own
+namelist file \texttt{config\_quantum.nml}, output directory \texttt{output\_quantum/} and plotting script
+\texttt{scripts/quantum\_post\_processor.py}. Its sources are in \texttt{src/quantum/}; it shares only
+\texttt{src/common/} (precision, the equal-area grid and the namelist helpers) with the classical code. It needs
+LAPACK: \texttt{zheev} diagonalises $\hat J_y$ and \texttt{zgeev} computes the eigenvalues of $\hat U$.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{lll}
+\toprule
+File & Role & Physics \\
+\midrule
+\texttt{quantum\_config\_mod.f90} & reads and checks \texttt{config\_quantum.nml} & $p, k, j$ \\
+\texttt{spin\_mod.f90} & $\hat J_y$ matrix, $\langle\hat{\vJ}\rangle$, coherent states & \eqref{eq:jy-elements}, \eqref{eq:coherent} \\
+\texttt{floquet\_mod.f90} & $\hat V, \mu_l$ (\texttt{zheev}), $e^{-i\alpha\hat J_y}$, $\hat U$ & \eqref{eq:exp-jy}, \eqref{eq:floquet} \\
+\texttt{husimi\_mod.f90} & $Q$ on the equal-area grid, its normalisation & \eqref{eq:husimi}, \eqref{eq:husimi-norm} \\
+\texttt{spectrum\_mod.f90} & quasienergies per parity sector (\texttt{zgeev}), $s_i$, $\langle r\rangle$ & \eqref{eq:unfold}, \eqref{eq:wigner} \\
+\texttt{quantum\_io\_mod.f90} & ASCII output & -- \\
+\texttt{quantum\_main.f90} & driver & -- \\
+\bottomrule
+\end{tabular}
+\caption{Files of the quantum code (\texttt{src/quantum/}).}
+\label{tab:qmodules}
+\end{table}
+
+\paragraph{Algorithm.} (1) Diagonalise $\hat J_y$ once and build $\hat U$ from \eqref{eq:exp-jy} and the diagonal kick.
+(2) Start from the coherent state \eqref{eq:coherent} at $(\theta_0,\phi_0)$; its amplitudes are computed from
+logarithms, so large $j$ does not overflow. (3) Apply $\hat U$ \texttt{n\_kicks} times, writing
+$\langle\hat{\vJ}\rangle/j$, the norm and the spread after every kick (\texttt{expectation.dat}) and $Q$ at the kicks
+listed in \texttt{\&husimi} (\texttt{husimi.dat}). (4) Optionally compute the quasienergies in the two parity sectors
+(\texttt{quasienergies.dat}) and the spacing histogram with the curves \eqref{eq:wigner} (\texttt{spacings.dat}).
+(5) Write the correctness checks to \texttt{summary.dat}. The cost is dominated by $O(N^3)$ matrix operations,
+$N = 2j+1$: a few seconds for $j = 500$.
+
+\paragraph{Correctness checks.} The following criteria from the literature \cite{Haake,HKS1987,Atas2013} were checked:
+\begin{itemize}
+  \item $\max|(\hat U^\dagger\hat U - 1)_{ab}| \approx 4\times10^{-15}$ and $\max|([\hat U,\hat P])_{ab}| \approx
+  5\times10^{-13}$; $|\langle\psi_n|\psi_n\rangle - 1| < 3\times10^{-13}$; every eigenvalue of $\hat U$ has modulus 1
+  to $3\times10^{-14}$.
+  \item The Husimi normalisation \eqref{eq:husimi-norm} is $1.0000$ on a $100\times200$ grid for $j = 50$.
+  \item $k = 0$, $p = \pi/2$: $\hat U^4$ is a rotation by $2\pi$, and $\langle\hat{\bm s}\rangle$ returns to its initial
+  value after 4 kicks to $10^{-14}$ with spread $1/j$, as for a coherent state.
+  \item Correspondence, $j = 500$, $k = 3$, $p=\pi/2$: started in the island at $(\theta_0,\phi_0) = (2.25, 0.63)$,
+  $|\langle\hat{\bm s}\rangle_n - \bm s_n| < 0.008$ for 50 kicks. Started in the chaotic sea at $(\pi/2, 1.4)$ the
+  difference is $0.11$ at $n = 5$ and $0.50$ at $n = 10$, consistent with $n_E = \ln 500/(2\times0.33) \approx 9$
+  from \eqref{eq:ehrenfest} (\cref{fig:quantum-expectation}).
+  \item Spectrum, $j = 500$, $p = 1.7$, $k = 10$: $\langle r\rangle = 0.537$ and $0.511$ in the two sectors,
+  against $0.531$ for the COE, and $P(s)$ follows the COE curve (\cref{fig:quantum-spacings}).
+\end{itemize}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{figures/quantum_husimi.pdf}
+\caption{Husimi distribution \eqref{eq:husimi} of a coherent state, $j = 200$, $p = \pi/2$, $k = 3$, after $n = 0, 5,
+10, 30$ kicks. Top: started in the regular island at $(\theta_0,\phi_0) = (2.25, 0.63)$, where it stays.
+Bottom: started in the chaotic sea at $(\pi/2, 1.4)$, where it spreads over the chaotic region of
+\cref{fig:portraits} and avoids the islands.}
+\label{fig:quantum-husimi}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{figures/quantum_expectation.pdf}
+\caption{$\langle\hat{\vJ}\rangle/j$ (solid) and the classical orbit from the same point (dashed), $j = 200$, for the two
+initial states of \cref{fig:quantum-husimi}. The island start lies close to the fixed point $\vs_+$
+(\cref{sec:stability}), so both curves stay almost constant; in the chaotic sea they separate after a few kicks.}
+\label{fig:quantum-expectation}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.6\textwidth]{figures/quantum_spacings.pdf}
+\caption{Distribution of unfolded quasienergy spacings \eqref{eq:unfold}, both parity sectors, $j = 500$, $p = 1.7$,
+$k = 10$, compared with \eqref{eq:wigner}.}
+\label{fig:quantum-spacings}
+\end{figure}
+
+
 \begin{thebibliography}{9}
 \bibitem{HKS1987} F.~Haake, M.~Ku\'s, R.~Scharf, \emph{Classical and quantum chaos for a kicked top},
   Z.~Phys.~B \textbf{65}, 381 (1987).
@@ -1238,6 +1479,8 @@ Other variants (a different kick axis, several kicks per period, dissipation) on
   chaos in a kicked top}, Nature \textbf{461}, 768 (2009).
 \bibitem{Neill2016} C.~Neill \emph{et al.}, \emph{Ergodic dynamics and thermalization in an isolated quantum
   system}, Nature Phys.~\textbf{12}, 1037 (2016).
+\bibitem{Atas2013} Y.~Y.~Atas, E.~Bogomolny, O.~Giraud, G.~Roux, \emph{Distribution of the ratio of consecutive level
+spacings in random matrix ensembles}, Phys. Rev. Lett. \textbf{110}, 084101 (2013).
 \end{thebibliography}
 
 \end{document}
