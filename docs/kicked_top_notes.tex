@@ -1121,11 +1121,11 @@ numbering of these notes changes.
 \eqref{eq:rotation-y}, and then \texttt{rotate\_z} with the angle $kZ'$, the torsion \eqref{eq:torsion}.
 \texttt{kick\_tangent} is the tangent map \eqref{eq:tangent}; its last line is $R_z(kZ')\,\delta\vs' + k\,\delta Z'\,
 \hat{\bm z}\times\vs_{n+1}$, with $\hat{\bm z}\times\vs = (-Y, X, 0)$:
-\lstinputlisting[firstline=13, lastline=44, firstnumber=13]{../src/map_mod.f90}
+\lstinputlisting[firstline=13, lastline=44, firstnumber=13]{../src/classical/map_mod.f90}
 
-\paragraph{The equal-area grid.} \texttt{grid\_points} in \texttt{init\_mod.f90} places cell centres uniformly in
+\paragraph{The equal-area grid.} \texttt{equal\_area\_grid} in \texttt{src/common/sphere\_mod.f90} (used by \texttt{init\_mod}) places cell centres uniformly in
 $Z$ and $\phi$, as required by \eqref{eq:area}:
-\lstinputlisting[firstline=50, lastline=57, firstnumber=50]{../src/init_mod.f90}
+\lstinputlisting[firstline=33, lastline=40, firstnumber=33]{../src/common/sphere_mod.f90}
 
 \subsection{Parameters}
 
