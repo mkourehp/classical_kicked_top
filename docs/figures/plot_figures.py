@@ -122,6 +122,51 @@ def lyapunov_map():
     fig.savefig(FIG_DIR / "lyapunov_map.pdf", dpi=150)
 
 
+def quantum_husimi():
+    """Fig. [fig:quantum-husimi]: Husimi snapshots of a coherent state in an island and in the chaotic sea."""
+    fig, axes = plt.subplots(2, 4, figsize=(13, 5.5), sharex=True, sharey=True)
+    for row, run in zip(axes, ["quantum_island", "quantum_chaotic"]):
+        d = load(run, "husimi.dat")
+        kicks = np.unique(d[:, 0]).astype(int)
+        n_phi = len(np.unique(d[d[:, 0] == kicks[0], 1]))
+        for ax, n in zip(row, kicks):
+            b = d[d[:, 0] == n]
+            ax.pcolormesh(b[:, 1].reshape(-1, n_phi), b[:, 2].reshape(-1, n_phi), b[:, 5].reshape(-1, n_phi),
+                          shading="nearest", cmap="viridis", rasterized=True)
+            phase_axes(ax)
+            ax.set_title(f"$n = {n}$")
+            ax.label_outer()
+    fig.savefig(FIG_DIR / "quantum_husimi.pdf", dpi=150)
+
+
+def quantum_expectation():
+    """Fig. [fig:quantum-expectation]: <J>/j of the coherent state against the classical orbit."""
+    fig, axes = plt.subplots(1, 2, figsize=(11, 3.5), sharey=True)
+    for ax, run, title in zip(axes, ["quantum_island", "quantum_chaotic"], ["island", "chaotic sea"]):
+        q = load(run, "expectation.dat")
+        c = load(f"{run}_classical", "trajectory.dat")
+        for col, name, color in [(1, "x", "C0"), (2, "y", "C1"), (3, "z", "C2")]:
+            ax.plot(q[:, 0], q[:, col], color=color, label=rf"$\langle J_{name}\rangle/j$")
+            ax.plot(c[:, 1], c[:, col + 1], "--", color=color, lw=0.8)
+        ax.set_xlabel("kick $n$")
+        ax.set_title(title)
+    axes[0].legend(fontsize=8, ncol=3, loc="lower left")
+    fig.savefig(FIG_DIR / "quantum_expectation.pdf")
+
+
+def quantum_spacings():
+    """Fig. [fig:quantum-spacings]: quasienergy spacing histogram against Poisson, COE and CUE."""
+    d = load("quantum_spectrum", "spacings.dat")
+    fig, ax = plt.subplots(figsize=(6, 3.8))
+    ax.bar(d[:, 0], d[:, 1], width=d[1, 0] - d[0, 0], color="0.75", label="quasienergies")
+    for col, label in [(2, "Poisson"), (3, "COE"), (4, "CUE")]:
+        ax.plot(d[:, 0], d[:, col], label=label)
+    ax.set_xlabel("$s$")
+    ax.set_ylabel("$P(s)$")
+    ax.legend()
+    fig.savefig(FIG_DIR / "quantum_spacings.pdf")
+
+
 if __name__ == "__main__":
     portraits()
     near_flow()
@@ -130,3 +175,6 @@ if __name__ == "__main__":
     divergence()
     single_orbits()
     lyapunov_map()
+    quantum_husimi()
+    quantum_expectation()
+    quantum_spacings()

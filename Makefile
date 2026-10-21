@@ -65,10 +65,12 @@ run-quantum: $(QEXE)
 
 # lecture notes
 DOCS        = docs
-FIG_CONFIGS = $(wildcard $(DOCS)/figures/configs/*.nml)
+FIG_CONFIGS  = $(wildcard $(DOCS)/figures/configs/*.nml)
+QFIG_CONFIGS = $(wildcard $(DOCS)/figures/configs_quantum/*.nml)
 
-figures: $(EXE)
+figures: $(EXE) $(QEXE)
 	for f in $(FIG_CONFIGS); do ./$(EXE) $$f || exit 1; done
+	for f in $(QFIG_CONFIGS); do ./$(QEXE) $$f || exit 1; done
 	python3 $(DOCS)/figures/plot_figures.py
 
 docs:
