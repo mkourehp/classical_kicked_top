@@ -5,6 +5,7 @@
 ! of the Hamiltonian, eq. (12) [eq:H].
 module config_mod
   use kinds_mod, only: wp
+  use io_utils_mod, only: check_nml_read
   implicit none
   private
   public :: config_t, read_config, str_len
@@ -75,19 +76,19 @@ contains
     if (ios /= 0) error stop 'config_mod: cannot open namelist file '//trim(path)
 
     read(u, nml=system, iostat=ios)
-    call check_read(ios, 'system')
+    call check_nml_read(ios, 'system', 'config_mod')
     rewind(u)
     read(u, nml=simulation, iostat=ios)
-    call check_read(ios, 'simulation')
+    call check_nml_read(ios, 'simulation', 'config_mod')
     rewind(u)
     read(u, nml=initial, iostat=ios)
-    call check_read(ios, 'initial')
+    call check_nml_read(ios, 'initial', 'config_mod')
     rewind(u)
     read(u, nml=output, iostat=ios)
-    call check_read(ios, 'output')
+    call check_nml_read(ios, 'output', 'config_mod')
     rewind(u)
     read(u, nml=lyapunov, iostat=ios)
-    call check_read(ios, 'lyapunov')
+    call check_nml_read(ios, 'lyapunov', 'config_mod')
     close(u)
 
     cfg%p = p
@@ -108,17 +109,6 @@ contains
 
     call validate(cfg)
   end subroutine read_config
-
-  ! Stops on a malformed namelist group.
-  subroutine check_read(ios, group)
-    integer, intent(in) :: ios
-    character(len=*), intent(in) :: group
-
-    ! A missing group (end of file) keeps the defaults.
-    if (ios /= 0 .and. .not. is_iostat_end(ios)) then
-      error stop 'config_mod: error reading namelist group &'//group
-    end if
-  end subroutine check_read
 
   ! Stops with a message if a parameter is out of range.
   subroutine validate(cfg)

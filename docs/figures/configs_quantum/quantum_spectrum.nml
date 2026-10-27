@@ -1,0 +1,6 @@
+&system p = 1.7, k = 10.0, j = 500 /
+&simulation n_kicks = 0 /
+&initial theta0 = 1.0, phi0 = 0.5 /
+&husimi enabled = .false., n_theta = 100, n_phi = 200, kicks = 0, 5, 10, 30 /
+&spectrum enabled = .true., n_bins = 30, s_max = 3.0 /
+&output out_dir = 'docs/figures/data/quantum_spectrum' /

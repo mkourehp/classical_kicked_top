@@ -1,0 +1,4 @@
+&system p = 1.5707963267948966, k = 3.0 /
+&simulation n_kicks = 50, n_transient = 0, save_every = 1 /
+&initial mode = 'single', theta0 = 2.25, phi0 = 0.63 /
+&output out_dir = 'docs/figures/data/quantum_island_classical' /

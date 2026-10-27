@@ -1,0 +1,6 @@
+&system p = 1.5707963267948966, k = 3.0, j = 200 /
+&simulation n_kicks = 50 /
+&initial theta0 = 2.25, phi0 = 0.63 /
+&husimi enabled = .true., n_theta = 100, n_phi = 200, kicks = 0, 5, 10, 30 /
+&spectrum enabled = .false., n_bins = 30, s_max = 3.0 /
+&output out_dir = 'docs/figures/data/quantum_island' /
