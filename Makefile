@@ -91,15 +91,18 @@ run-regimes: $(REXE)
 DOCS        = docs
 FIG_CONFIGS  = $(wildcard $(DOCS)/figures/configs/*.nml)
 QFIG_CONFIGS = $(wildcard $(DOCS)/figures/configs_quantum/*.nml)
+RFIG_CONFIGS = $(wildcard $(DOCS)/figures/configs_regimes/*.nml)
 
-figures: $(EXE) $(QEXE)
+figures: $(EXE) $(QEXE) $(REXE)
 	for f in $(FIG_CONFIGS); do ./$(EXE) $$f || exit 1; done
 	for f in $(QFIG_CONFIGS); do ./$(QEXE) $$f || exit 1; done
+	for f in $(RFIG_CONFIGS); do ./$(REXE) $$f || exit 1; done
 	python3 $(DOCS)/figures/plot_figures.py
+	python3 $(DOCS)/figures/plot_three_regimes.py
 
 docs:
-	cd $(DOCS) && latexmk -pdf -interaction=nonstopmode -halt-on-error kicked_top_notes.tex
+	cd $(DOCS) && latexmk -pdf -interaction=nonstopmode -halt-on-error kicked_top_notes.tex three_regimes.tex
 
 clean:
 	rm -rf $(BUILD)
-	cd $(DOCS) && latexmk -c kicked_top_notes.tex
+	cd $(DOCS) && latexmk -c kicked_top_notes.tex three_regimes.tex
