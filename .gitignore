@@ -222,6 +222,7 @@ __marimo__/
 # Build and simulation output
 build/
 output/
+output_regimes/
 
 # Lecture notes
 docs/figures/data/
