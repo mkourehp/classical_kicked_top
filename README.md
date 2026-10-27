@@ -55,6 +55,8 @@ python scripts/post_processor.py --lyapunov        # also output/lyapunov.png (n
 
 Python needs `numpy` and `matplotlib`. The quantum code needs LAPACK and BLAS (Ubuntu: `sudo apt install liblapack-dev libblas-dev`).
 
+The notebook `notebooks/kam_theory.ipynb` explains KAM theory, the Poincaré–Birkhoff theorem, the Diophantine condition and golden-mean tori, using the standard map as the simplest example. It is standalone (no Fortran build or output needed) and needs `numpy`, `matplotlib` and `jupyter`: `jupyter notebook notebooks/kam_theory.ipynb`.
+
 ## Parameters (`config.nml`)
 
 | group | name | meaning |
