@@ -20,6 +20,7 @@
   enabled = .true.
   n_theta = 100              ! grid points in Z = cos(theta) (equal-area grid)
   n_phi   = 200              ! grid points in phi
+  n_husimi = 0               ! if > 0: also n_husimi kicks evenly spaced over [0, n_kicks]
   kicks   = 0, 10, 50, 100   ! kicks at which the Husimi distribution is written
 /
 

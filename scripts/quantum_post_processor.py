@@ -53,19 +53,28 @@ class QuantumPostProcessor:
         title, d = self._load("husimi.dat")
         kicks = np.unique(d[:, 0]).astype(int)
         n_phi = len(np.unique(d[d[:, 0] == kicks[0], 1]))
-        fig, axes = plt.subplots(1, len(kicks), figsize=(4 * len(kicks), 3.6), squeeze=False)
-        for ax, n in zip(axes[0], kicks):
+        ncols = int(np.ceil(np.sqrt(len(kicks))))
+        nrows = int(np.ceil(len(kicks) / ncols))
+        fig, axes = plt.subplots(nrows, ncols, figsize=(3 * ncols, 2 * nrows + 0.6),
+                                 sharex=True, sharey=True, squeeze=False)
+        for ax in axes.flat[len(kicks):]:
+            ax.axis("off")
+        for ax, n in zip(axes.flat, kicks):
             b = d[d[:, 0] == n]
             shape = (-1, n_phi)
             ax.pcolormesh(b[:, 1].reshape(shape), b[:, 2].reshape(shape), b[:, 5].reshape(shape),
                           shading="nearest", cmap="viridis", rasterized=True)
             ax.set_xlim(-np.pi, np.pi)
             ax.set_ylim(-1, 1)
+            ax.set_yticks([-0.5, 0, 0.5])
+            ax.text(0.03, 0.95, f"$n = {n}$", transform=ax.transAxes, va="top", color="w", fontsize=9)
+        for ax in axes.flat[len(kicks) - ncols:len(kicks)]:
+            ax.tick_params(labelbottom=True)
             ax.set_xlabel(r"$\phi$")
-            ax.set_title(f"$n = {n}$")
-        axes[0, 0].set_ylabel(r"$Z = \cos\theta$")
+        for ax in axes[:, 0]:
+            ax.set_ylabel(r"$Z = \cos\theta$")
         fig.suptitle(f"Husimi distribution, {title}")
-        fig.tight_layout()
+        fig.subplots_adjust(wspace=0.02, hspace=0.02)
         fig.savefig(self.out_dir / "husimi.png", dpi=200)
         return fig
 

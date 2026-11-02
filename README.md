@@ -101,6 +101,7 @@ python scripts/quantum_post_processor.py --classical output/trajectory.dat --sph
 | `&simulation` | `n_kicks` | number of kicks |
 | `&initial` | `theta0`, `phi0` | centre of the initial coherent state |
 | `&husimi` | `enabled`, `n_theta`, `n_phi`, `kicks` | Husimi snapshots on the equal-area grid at the listed kicks |
+| | `n_husimi` | if > 0, also `n_husimi` snapshots evenly spaced from kick 0 to `n_kicks` (merged with `kicks`, sorted, duplicates removed) |
 | `&spectrum` | `enabled`, `n_bins`, `s_max` | quasienergies and spacing histogram on $[0, s_{max}]$ |
 | `&output` | `out_dir` | output directory (default `output_quantum`) |
 
