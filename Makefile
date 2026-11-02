@@ -57,8 +57,8 @@ $(BUILD)/floquet_mod.o $(BUILD)/husimi_mod.o: $(BUILD)/spin_mod.o
 $(BUILD)/quantum_io_mod.o: $(BUILD)/quantum_config_mod.o $(BUILD)/spectrum_mod.o
 $(BUILD)/quantum_main.o:   $(filter-out $(BUILD)/quantum_main.o, $(QUANTUM_OBJS))
 
-run: $(EXE)
-	./$(EXE) config.nml
+run-classical: $(EXE)
+	./$(EXE) config_classical.nml
 
 run-quantum: $(QEXE)
 	./$(QEXE) config_quantum.nml
