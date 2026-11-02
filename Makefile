@@ -23,7 +23,7 @@ EXE  = $(BUILD)/kicked_top
 QEXE = $(BUILD)/kicked_top_quantum
 REXE = $(BUILD)/kicked_top_regimes
 
-.PHONY: all classical quantum regimes run run-quantum run-regimes clean figures docs
+.PHONY: all classical quantum regimes run-classical run-quantum run-regimes clean figures docs
 
 all: classical quantum regimes
 
@@ -78,8 +78,8 @@ $(BUILD)/quantum_main.o:   $(filter-out $(BUILD)/quantum_main.o, $(QUANTUM_OBJS)
 $(BUILD)/regimes_io_mod.o: $(BUILD)/regimes_config_mod.o
 $(BUILD)/regimes_main.o:   $(REGIMES_DEPS) $(CHAIN_OBJS) $(filter-out $(BUILD)/regimes_main.o, $(REGIMES_OBJS))
 
-run: $(EXE)
-	./$(EXE) config.nml
+run-classical: $(EXE)
+	./$(EXE) config_classical.nml
 
 run-quantum: $(QEXE)
 	./$(QEXE) config_quantum.nml
