@@ -29,7 +29,7 @@ class PostProcessor:
         """Phase portrait in the canonical coordinates (phi, Z), Sec. 1.3; one colour per orbit."""
         title, data = self._load("phase_space.dat")
         fig, ax = plt.subplots(figsize=(8, 5))
-        ax.scatter(data[:, 2], data[:, 3], c=data[:, 0], s=0.2, cmap="turbo", rasterized=True)
+        ax.scatter(data[:, 2], data[:, 3], c="grey", s=0.1, rasterized=True)
         ax.set_xlim(-np.pi, np.pi)
         ax.set_ylim(-1, 1)
         ax.set_xlabel(r"$\phi$")

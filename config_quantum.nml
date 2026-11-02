@@ -3,8 +3,8 @@
 
 &system
   p = 1.5707963267948966   ! pi/2
-  k = 3.0
-  j = 50                   ! Hilbert-space dimension 2j+1
+  k = 2.5
+  j = 6                   ! Hilbert-space dimension 2j+1
 /
 
 &simulation
@@ -25,7 +25,7 @@
 /
 
 &spectrum
-  enabled = .true.   ! quasienergies of U and their spacing statistics
+  enabled = .false.   ! quasienergies of U and their spacing statistics
   n_bins  = 30
   s_max   = 3.0
 /

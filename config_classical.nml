@@ -2,12 +2,12 @@
 ! Angles in radians.
 
 &system
-  p = 1.5707963267948966   ! pi/2
-  k = 3.0
+  p = 1.570796326794896     ! pi/2 = 1.570796326794896
+  k = 1.0
 /
 
 &simulation
-  n_kicks     = 100   ! kicks recorded after the transient
+  n_kicks     = 500   ! kicks recorded after the transient
   n_transient = 0     ! kicks discarded before recording
   save_every  = 1     ! store every save_every-th kick
 /
@@ -16,8 +16,8 @@
   mode     = 'grid'   ! 'single' | 'grid' | 'random'
   theta0   = 1.5      ! single: polar angle
   phi0     = 0.7      ! single: azimuthal angle
-  n_theta  = 5       ! grid: points in Z = cos(theta) (equal-area grid)
-  n_phi    = 5       ! grid: points in phi
+  n_theta  = 10       ! grid: points in Z = cos(theta) (equal-area grid)
+  n_phi    = 10       ! grid: points in phi
   n_random = 100      ! random: number of points, uniform on the sphere
   seed     = 12345    ! random: seed
 /

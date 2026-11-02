@@ -119,7 +119,7 @@ def main():
     args = parser.parse_args()
 
     qp = QuantumPostProcessor(args.out_dir)
-    qp.plot_expectation(args.classical)
+    # qp.plot_expectation(args.classical)
     if (qp.out_dir / "husimi.dat").exists():
         qp.plot_husimi()
         if args.sphere:
