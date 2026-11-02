@@ -43,15 +43,16 @@ contains
     type(qconfig_t), intent(out) :: cfg
 
     real(wp) :: p, k, j, theta0, phi0, s_max
-    integer :: n_kicks, n_theta, n_phi, n_bins, kicks(max_snapshots)
+    integer :: n_kicks, n_theta, n_phi, n_husimi, n_bins, kicks(max_snapshots)
     logical :: enabled
     character(len=str_len) :: out_dir
-    integer :: u, ios, two_j
+    integer :: u, ios, two_j, i
+    integer, allocatable :: snap(:)
 
     namelist /system/ p, k, j
     namelist /simulation/ n_kicks
     namelist /initial/ theta0, phi0
-    namelist /husimi/ enabled, n_theta, n_phi, kicks
+    namelist /husimi/ enabled, n_theta, n_phi, n_husimi, kicks
     namelist /spectrum/ enabled, n_bins, s_max
     namelist /output/ out_dir
 
@@ -63,6 +64,7 @@ contains
     phi0 = 0.63_wp
     n_theta = 100
     n_phi = 200
+    n_husimi = 0
     kicks = -1
     kicks(1:4) = [0, 10, 50, 100]
     n_bins = 30
@@ -108,13 +110,36 @@ contains
     cfg%phi0 = phi0
     cfg%n_theta = n_theta
     cfg%n_phi = n_phi
-    cfg%husimi_kicks = pack(kicks, kicks >= 0 .and. kicks <= n_kicks)
+    if (n_husimi < 0) error stop 'quantum_config_mod: n_husimi must be >= 0'
+    ! n_husimi > 0 adds n_husimi kicks evenly spaced over [0, n_kicks] to the explicit list.
+    if (n_husimi == 1) then
+      snap = [0]
+    else
+      snap = [(nint(real(i, wp)*real(n_kicks, wp)/real(n_husimi - 1, wp)), i = 0, n_husimi - 1)]
+    end if
+    cfg%husimi_kicks = sorted_unique([pack(kicks, kicks >= 0 .and. kicks <= n_kicks), snap])
     cfg%n_bins = n_bins
     cfg%s_max = s_max
     cfg%out_dir = out_dir
 
     call validate(cfg)
   end subroutine read_qconfig
+
+  ! Returns the values of a in ascending order without duplicates.
+  function sorted_unique(a) result(b)
+    integer, intent(in) :: a(:)
+    integer, allocatable :: b(:)
+    integer, allocatable :: rest(:)
+    integer :: m
+
+    allocate(rest, source=a)
+    b = [integer ::]
+    do while (size(rest) > 0)
+      m = minval(rest)
+      b = [b, m]
+      rest = pack(rest, rest /= m)
+    end do
+  end function sorted_unique
 
   ! Stops with a message if a parameter is out of range.
   subroutine validate(cfg)
