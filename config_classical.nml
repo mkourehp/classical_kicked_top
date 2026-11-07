@@ -1,4 +1,4 @@
-! Classical kicked top: rotation about y by p, then torsion about z by k*Z.
+! Classical kicked top: kick = rotation about y by p, then free torsion about z by k*Z.
 ! Angles in radians.
 
 &system

@@ -13,8 +13,8 @@ module quantum_config_mod
 
   type :: qconfig_t
     ! &system
-    real(wp) :: p                  ! rotation angle per period
-    real(wp) :: k                  ! torsion (kick) strength
+    real(wp) :: p                  ! kick: rotation angle about y
+    real(wp) :: k                  ! torsion strength per period
     real(wp) :: j                  ! spin quantum number (integer or half-integer)
     integer :: dim                 ! dimension 2j+1 of the Hilbert space
     ! &simulation

@@ -10,8 +10,8 @@ contains
 
   ! Energy terms at a point s = (X, Y, Z) of the unit sphere, i.e. the scaled
   ! Hamiltonian h of eq. (14) [eq:h] without the delta comb:
-  !   e(1) = E_rot  = p*Y          (free precession about y)
-  !   e(2) = E_kick = (k/2)*Z**2   (torsion)
+  !   e(1) = E_kick = p*Y          (kick: rotation about y)
+  !   e(2) = E_tor  = (k/2)*Z**2   (free torsion about z)
   !   e(3) = E      = e(1) + e(2)
   ! E is not conserved by the map (Sec. 4); it is nearly conserved only when p
   ! and k are both small, where it is the effective Hamiltonian of eq. (24) [eq:heff].

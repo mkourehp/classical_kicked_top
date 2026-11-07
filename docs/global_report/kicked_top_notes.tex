@@ -208,21 +208,22 @@ instant, but the axis and the rate depend on where $\vJ$ is. That nonlinearity i
 
 The kicked top is an angular momentum $\vJ$ with $|\vJ| = j$ and the time-periodic Hamiltonian
 \begin{equation}\label{eq:H}
-  \boxed{H(t) = p\, J_y + \frac{k}{2j}\, J_z^2 \sum_{n=-\infty}^{\infty} \delta(t-n) ,}
+  \boxed{H(t) = \frac{k}{2j}\, J_z^2 + p\, J_y \sum_{n=-\infty}^{\infty} \delta(t-n) ,}
 \end{equation}
 with two real parameters:
 \begin{itemize}
-  \item $p$, the angle of free precession about the $y$ axis accumulated in one period (the period is set to $1$);
-  \item $k$, the strength of the \emph{kick}, also called the \emph{torsion} or \emph{twist}.
+  \item $k$, the strength of the \emph{torsion}, also called the \emph{twist}, which acts all the time (the period
+  is set to $1$);
+  \item $p$, the strength of the \emph{kick}: the angle by which each kick rotates $\vJ$ about the $y$ axis.
 \end{itemize}
 Here $\delta(t)$ is the Dirac delta function: $\delta(t) = 0$ for $t\ne0$, and $\int_a^b f(t)\,\delta(t-t_0)\,dt =
 f(t_0)$ for any smooth $f$ and any interval $a < t_0 < b$. The sum $\sum_n\delta(t-n)$ (a \emph{Dirac comb}) switches
 the second term on only at the integer times $t = n$, each time as an infinitely short, infinitely strong pulse.
-The first term is linear, so it generates a uniform rotation about $y$ (\cref{sec:precession}). The second term acts
-only at the instants $t = n$ (integer $n$). It is quadratic in $J_z$: as shown below, it rotates $\vJ$ about the $z$
-axis by an angle proportional to $J_z$. Points on the upper hemisphere are turned one way, points on the lower
+The first term acts at all times. It is quadratic in $J_z$: as shown below, it rotates $\vJ$ about the $z$ axis at
+an angular velocity proportional to $J_z$. Points on the upper hemisphere are turned one way, points on the lower
 hemisphere the other way, and the equator not at all, like twisting a towel. The factor $1/j$ makes the twist angle depend only on the
-\emph{direction} of $\vJ$ (see below).
+\emph{direction} of $\vJ$ (see below). The second term acts only at the instants $t = n$ (integer $n$). It is
+linear, so it generates a rotation about $y$ (\cref{sec:precession}), here compressed into an instant.
 
 Because $H$ depends explicitly on time, \eqref{eq:eom-general} with $A = H$ gives $dH/dt = \PB{H}{H} + \partial
 H/\partial t = \partial H/\partial t \ne 0$ (the bracket of anything with itself vanishes), so energy is \emph{not} conserved
@@ -240,19 +241,19 @@ convenient.
 
 \paragraph{The scaled Hamiltonian.} Insert $J_y = jY$ and $J_z = jZ$ into \eqref{eq:H}:
 \begin{equation*}
-  H = p\,(jY) + \frac{k}{2j}\,(jZ)^2 \sum_n\delta(t-n)
-    = j\Big[\,pY + \frac{k}{2}\,Z^2 \sum_n\delta(t-n)\Big].
+  H = \frac{k}{2j}\,(jZ)^2 + p\,(jY) \sum_n\delta(t-n)
+    = j\Big[\,\frac{k}{2}\,Z^2 + pY \sum_n\delta(t-n)\Big].
 \end{equation*}
 The whole Hamiltonian is $j$ times a function of $\vs$ alone. We write $H = j\,h$ with
 \begin{equation}\label{eq:h}
-  h(\vs,t) = p\, Y + \frac{k}{2}\, Z^2 \sum_n \delta(t-n).
+  h(\vs,t) = \frac{k}{2}\, Z^2 + p\, Y \sum_n \delta(t-n).
 \end{equation}
 
 \paragraph{The equation of motion for $\vs$.} Let $\nabla_{\!s}$ denote the gradient with respect to the three
 components of $\vs$, treated as independent variables:
 \begin{equation*}
   \nabla_{\!s}\, h = \Big(\frac{\partial h}{\partial X},\ \frac{\partial h}{\partial Y},\ \frac{\partial h}{\partial Z}\Big),
-  \qquad\text{e.g.}\quad \nabla_{\!s}\big(pY\big) = (0, p, 0),\quad \nabla_{\!s}\Big(\frac k2 Z^2\Big) = (0, 0, kZ).
+  \qquad\text{e.g.}\quad \nabla_{\!s}\Big(\frac k2 Z^2\Big) = (0, 0, kZ),\quad \nabla_{\!s}\big(pY\big) = (0, p, 0).
 \end{equation*}
 Now derive $\dot{\vs}$ in three steps.
 \begin{enumerate}
@@ -285,62 +286,72 @@ Three remarks.
 \end{itemize}
 For the kicked top \eqref{eq:h},
 \begin{equation}\label{eq:grad-h}
-  \nabla_{\!s}\, h = p\,\hat{\bm y} + kZ\sum_n \delta(t-n)\,\hat{\bm z} .
+  \nabla_{\!s}\, h = kZ\,\hat{\bm z} + p\sum_n \delta(t-n)\,\hat{\bm y} .
 \end{equation}
 
 %---------------------------------------------------------------------
 \section{The stroboscopic map}\label{sec:map}
 
 Because the Hamiltonian is periodic and the kicks are instantaneous, it is natural to look at the system once per
-period, just after each kick. Write $t = n^+$ for the instant just after the kick at $t = n$ and $t = n^-$ for the
-instant just before it (the limits from above and from below). Let $\vs_n = \vs(n^+)$. Integrating
-\eqref{eq:eom-s} from $t=n^+$ to $t=(n+1)^+$ gives a map $\vs_{n+1} = F(\vs_n)$, the \emph{stroboscopic} or
-\emph{Floquet} map. It is derived in two steps: free precession from $n^+$ to $(n+1)^-$, then the kick from
-$(n+1)^-$ to $(n+1)^+$.
+period, just before each kick. Write $t = n^-$ for the instant just before the kick at $t = n$ and $t = n^+$ for the
+instant just after it (the limits from below and from above). Let $\vs_n = \vs(n^-)$. Integrating
+\eqref{eq:eom-s} from $t=n^-$ to $t=(n+1)^-$ gives a map $\vs_{n+1} = F(\vs_n)$, the \emph{stroboscopic} or
+\emph{Floquet} map. It is derived in two steps: the kick from $n^-$ to $n^+$, then the free torsion from $n^+$ to
+$(n+1)^-$.
 
-\paragraph{Step 1: free precession.} For $n < t < n+1$ every $\delta(t-n)$ vanishes, so \eqref{eq:grad-h} is
-$\nabla_{\!s} h = p\,\hat{\bm y}$ and \eqref{eq:eom-s} becomes $\dot{\vs} = p\,\hat{\bm y}\times\vs$. With
-$\hat{\bm y}\times\vs = (0,1,0)\times(X,Y,Z) = (Z,\ 0,\ -X)$ this is
+\paragraph{Step 1: the kick.} Integrate \eqref{eq:eom-s} over a short interval $[n-\varepsilon,\ n+\varepsilon]$
+and let $\varepsilon\to0$. The torsion term $kZ\,\hat{\bm z}\times\vs$ is bounded (its size is at most $k$), so
+its contribution to the change of $\vs$ is at most $2\varepsilon k \to 0$. Only the $\delta$ term of
+\eqref{eq:grad-h} survives:
 \begin{equation*}
-  \dot X = pZ, \qquad \dot Y = 0, \qquad \dot Z = -pX .
+  \dot{\vs} = p\,\delta(t-n)\;\hat{\bm y}\times\vs, \qquad \hat{\bm y}\times\vs = (0,1,0)\times(X,Y,Z) = (Z,\ 0,\ -X).
 \end{equation*}
-$Y$ is constant. Differentiating the first equation and using the third gives $\ddot X = p\dot Z = -p^2X$, a harmonic
-oscillator of frequency $p$. With $\tau = t - n$ the time since the kick, and initial values $(X,Y,Z)$ at $\tau=0$,
-the solution is
+In components, $\dot Y = 0$, so $Y$ does not change during the kick. The other two are
+$\dot X = p\,\delta(t-n)\,Z$ and $\dot Z = -p\,\delta(t-n)\,X$. Introduce the angle accumulated since the start of
+the interval,
 \begin{equation*}
-  X(\tau) = X\cos p\tau + Z\sin p\tau, \qquad Z(\tau) = \frac{\dot X(\tau)}{p} = -X\sin p\tau + Z\cos p\tau
+  \alpha(t) = p\int_{n-\varepsilon}^{t}\delta(t''-n)\,dt'' ,
 \end{equation*}
-(check: $X(0) = X$, $Z(0) = Z$, and $\dot Z = -p\,X(\tau)$). At $\tau = 1$, just before the next kick,
+which rises from $\alpha = 0$ before the kick to $\alpha = p$ after it, with $d\alpha/dt = p\,\delta(t-n)$. By the
+chain rule $\dot X = (dX/d\alpha)\,\dot\alpha$, so the equations become
+\begin{equation*}
+  \frac{dX}{d\alpha} = Z, \qquad \frac{dZ}{d\alpha} = -X .
+\end{equation*}
+Differentiating the first equation with respect to $\alpha$ and using the second gives $d^2X/d\alpha^2 = dZ/d\alpha =
+-X$, a harmonic oscillator in the variable $\alpha$. With the initial values $(X,Y,Z)$ at $\alpha = 0$ the solution is
+\begin{equation*}
+  X(\alpha) = X\cos\alpha + Z\sin\alpha, \qquad Z(\alpha) = \frac{dX}{d\alpha} = -X\sin\alpha + Z\cos\alpha
+\end{equation*}
+(check: $X(0) = X$, $Z(0) = Z$, and $dZ/d\alpha = -X\cos\alpha - Z\sin\alpha = -X(\alpha)$). At the end of the kick,
+$\alpha = p$:
 \begin{equation}\label{eq:rotation-y}
   X' = X\cos p + Z\sin p, \qquad Y' = Y, \qquad Z' = -X\sin p + Z\cos p ,
 \end{equation}
 which is $\vs' = R_y(p)\,\vs_n$ with $R_y$ from \eqref{eq:rotations}: a rotation about $y$ by the angle $p$.
+(Replacing $\delta$ by any narrow pulse of unit area gives the same result, since only the total angle $p$ enters.)
 
-\paragraph{Step 2: the kick.} Integrate \eqref{eq:eom-s} over a short interval $[n+1-\varepsilon,\ n+1+\varepsilon]$
-and let $\varepsilon\to0$. The precession term $p\,\hat{\bm y}\times\vs$ is bounded (its size is at most $p$), so
-its contribution to the change of $\vs$ is at most $2\varepsilon p \to 0$. Only the $\delta$ term survives:
-\begin{equation}\label{eq:kick-ode}
-  \dot{\vs} = kZ\,\delta(t-n-1)\;\hat{\bm z}\times\vs, \qquad \hat{\bm z}\times\vs = (-Y,\ X,\ 0).
+\paragraph{Step 2: free torsion.} For $n < t < n+1$ every $\delta(t-n)$ vanishes, so \eqref{eq:grad-h} is
+$\nabla_{\!s} h = kZ\,\hat{\bm z}$ and \eqref{eq:eom-s} becomes
+\begin{equation}\label{eq:torsion-ode}
+  \dot{\vs} = kZ\;\hat{\bm z}\times\vs, \qquad \hat{\bm z}\times\vs = (0,0,1)\times(X,Y,Z) = (-Y,\ X,\ 0).
 \end{equation}
-In components, $\dot Z = 0$, so $Z$ does not change during the kick and keeps its value $Z'$. The other two are
-$\dot X = -kZ'\,\delta(t-n-1)\,Y$ and $\dot Y = kZ'\,\delta(t-n-1)\,X$. Introduce the angle accumulated since the start of
-the interval,
+In components, $\dot Z = 0$, so $Z$ keeps the value $Z'$ it had just after the kick during the whole interval. The
+other two are
 \begin{equation*}
-  \alpha(t) = kZ'\int_{n+1-\varepsilon}^{t}\delta(t''-n-1)\,dt'' ,
+  \dot X = -kZ'\,Y, \qquad \dot Y = kZ'\,X ,
 \end{equation*}
-which rises from $\alpha = 0$ before the kick to $\alpha = kZ'$ after it, with $d\alpha/dt = kZ'\,\delta(t-n-1)$. By
-the chain rule $\dot X = (dX/d\alpha)\,\dot\alpha$, so the equations become
+a uniform rotation about $z$ with the constant angular velocity $kZ'$. Differentiating the first equation and using
+the second gives $\ddot X = -kZ'\,\dot Y = -(kZ')^2X$, a harmonic oscillator of frequency $kZ'$. With $\tau = t - n$
+the time since the kick, and initial values $(X', Y')$ at $\tau = 0$, the solution is
 \begin{equation*}
-  \frac{dX}{d\alpha} = -Y, \qquad \frac{dY}{d\alpha} = X ,
+  X(\tau) = X'\cos(kZ'\tau) - Y'\sin(kZ'\tau), \qquad Y(\tau) = X'\sin(kZ'\tau) + Y'\cos(kZ'\tau)
 \end{equation*}
-a rotation about $z$ with unit rate in $\alpha$: $X = X'\cos\alpha - Y'\sin\alpha$, $Y = X'\sin\alpha + Y'\cos\alpha$.
-At the end of the kick, $\alpha = kZ'$:
+(check: $X(0) = X'$, $Y(0) = Y'$, $\dot X = -kZ'\big(X'\sin(kZ'\tau) + Y'\cos(kZ'\tau)\big) = -kZ'\,Y(\tau)$ and
+$\dot Y = kZ'\big(X'\cos(kZ'\tau) - Y'\sin(kZ'\tau)\big) = kZ'\,X(\tau)$). At $\tau = 1$, just before the next kick,
 \begin{equation}\label{eq:torsion}
   X'' = X'\cos(kZ') - Y'\sin(kZ'), \qquad Y'' = X'\sin(kZ') + Y'\cos(kZ'), \qquad Z'' = Z' ,
 \end{equation}
 i.e.\ $\vs'' = R_z(kZ')\,\vs'$. This is a \emph{torsion}: a rotation about $z$ whose angle depends on the height $Z$.
-(Replacing $\delta$ by any narrow pulse of unit area gives the same result, since only the total angle $kZ'$
-enters.)
 
 \paragraph{The map.} Together:
 \begin{equation}\label{eq:map}
@@ -370,7 +381,7 @@ enters.)
       \draw[gray,dashed] (0,1) arc (90:270:0.3 and 1);
       \draw[->,very thick,blue!70!black] (1.2,-0.35) arc (-70:70:0.15 and 0.4);
       \node[blue!70!black] at (1.25,0.55) {$p$};
-      \node at (0,-1.45) {(a) rotation about $y$ by $p$};
+      \node at (0,-1.45) {(a) kick: rotation about $y$ by $p$};
     \end{scope}
     \begin{scope}[xshift=3.4cm]
       \draw[thick] (0,0) circle (1);
@@ -386,11 +397,11 @@ enters.)
         \fi
       }
       \node[red!70!black] at (1.35,0.7) {$kZ$};
-      \node at (0,-1.45) {(b) torsion about $z$ by $kZ$};
+      \node at (0,-1.45) {(b) free torsion about $z$ by $kZ$};
     \end{scope}
   \end{tikzpicture}
-  \caption{The two steps of one period of the kicked top, \cref{eq:map}. (a) A rigid rotation about $y$. (b) A
-  rotation about $z$ whose angle $kZ$ grows with height: the upper and lower hemispheres are twisted in opposite
+  \caption{The two steps of one period of the kicked top, \cref{eq:map}. (a) The kick, a rigid rotation about $y$. (b) The
+  free evolution between kicks, a rotation about $z$ whose angle $kZ$ grows with height: the upper and lower hemispheres are twisted in opposite
   directions and the equator stays put.}
   \label{fig:map-steps}
 \end{figure}
@@ -421,7 +432,7 @@ that grows with the other, is called a \emph{twist map}.
 
 \paragraph{The rotation.} $R_y(p)$ moves the sphere rigidly, so it preserves geometric area on the sphere. By
 \eqref{eq:area} geometric area and phase-space area $d\phi\,dZ$ are the same, so $|\det D_{\rm rotation}| = 1$. (The
-same follows from Liouville's theorem, since $R_y(p)$ is the flow of the Hamiltonian $pY$.)
+same follows from Liouville's theorem, since the kick $R_y(p)$ is generated by the Hamiltonian $pY$.)
 
 \paragraph{The full map.} By the chain rule the Jacobian of a composition is the product of the Jacobians, and
 $\det(AB) = \det A\,\det B$. Hence
@@ -439,17 +450,17 @@ the trace of the Jacobian (\cref{sec:stability}).
 The code evaluates, at every recorded point $\vs_n$, the two terms of the scaled Hamiltonian \eqref{eq:h} without the
 $\delta$ comb, and their sum:
 \begin{equation}\label{eq:energy}
-  E_{\rm rot} = pY, \qquad E_{\rm kick} = \frac{k}{2}Z^2, \qquad E = E_{\rm rot} + E_{\rm kick} = pY + \frac{k}{2}Z^2 .
+  E_{\rm kick} = pY, \qquad E_{\rm tor} = \frac{k}{2}Z^2, \qquad E = E_{\rm kick} + E_{\rm tor} = pY + \frac{k}{2}Z^2 .
 \end{equation}
 For $p, k \ge 0$, $|Y|\le1$ and $0\le Z^2\le1$ give $-p \le E \le p + k/2$. The minimum $E = -p$ is reached at
 $-\hat{\bm y}$, where $Y=-1$ and $Z=0$.
 
 \paragraph{Why $E$ is not conserved.} Follow $E$ through one period with \eqref{eq:rotation-y} and \eqref{eq:torsion}.
 \begin{itemize}
-  \item During the precession $Y$ is constant, so $E_{\rm rot}$ is unchanged, but $Z \to Z' = -X\sin p + Z\cos p$
-  changes $E_{\rm kick}$.
-  \item During the kick $Z$ is constant, so $E_{\rm kick}$ is unchanged, but $Y \to Y'' = X'\sin(kZ') + Y'\cos(kZ')$
-  changes $E_{\rm rot}$.
+  \item During the kick $Y$ is constant, so $E_{\rm kick}$ is unchanged, but $Z \to Z' = -X\sin p + Z\cos p$
+  changes $E_{\rm tor}$.
+  \item During the free torsion $Z$ is constant, so $E_{\rm tor}$ is unchanged, but $Y \to Y'' = X'\sin(kZ') +
+  Y'\cos(kZ')$ changes $E_{\rm kick}$.
 \end{itemize}
 Over one period
 \begin{equation*}
@@ -797,7 +808,7 @@ regular orbits appear as smooth closed curves.
 \paragraph{Why small $k$ looks integrable at $p = \pi/2$.} For small $k$ (\cref{fig:portraits}, $k=0.5$), the phase
 portrait looks almost integrable, although the unperturbed map $R = R_y(\pi/2)$ is degenerate: $R^4 = R_y(2\pi) = I$,
 every orbit has period 4. So look at four periods at once. Write $F = TR$, with $T$ the torsion, the time-$1$ flow of
-the kick Hamiltonian $h_T = \frac k2 Z^2$ (Step 2 of \cref{sec:map}). Inserting $R^{-m}R^m = I$,
+the free Hamiltonian $h_T = \frac k2 Z^2$ (Step 2 of \cref{sec:map}). Inserting $R^{-m}R^m = I$,
 \begin{equation*}
   F^4 = TRTRTRTR = T\,\big(RTR^{-1}\big)\,\big(R^2TR^{-2}\big)\,\big(R^3TR^{-3}\big)\,R^4 ,
   \qquad R^4 = I .
@@ -1030,20 +1041,21 @@ gives the two transverse expectation values ($^*$ is complex conjugation).
 \paragraph{Derivation.} The state obeys the Schrödinger equation $i\,\frac{d}{dt}|\psi\rangle = \hat H(t)|\psi\rangle$
 with $\hat H(t)$ the operator version of \eqref{eq:H}. We integrate it over one period exactly as in \cref{sec:map}.
 \begin{enumerate}
-  \item For $n < t < n+1$, $\hat H = p\hat J_y$ does not depend on time, so $|\psi(t)\rangle = e^{-i(t-n)p\hat
-  J_y}|\psi(n^+)\rangle$. After the unit time, $|\psi\rangle \to \hat R\,|\psi\rangle$ with $\hat R = e^{-ip\hat J_y}$.
-  \item Across the kick only the $\delta$ term matters (the same argument as Step 2 of \cref{sec:map}):
-  $i\frac{d}{dt}|\psi\rangle = \frac{k}{2j}\hat J_z^2\,\delta(t-n-1)|\psi\rangle$. All operators involved commute
+  \item Across the kick only the $\delta$ term matters (the same argument as Step 1 of \cref{sec:map}):
+  $i\frac{d}{dt}|\psi\rangle = p\hat J_y\,\delta(t-n)|\psi\rangle$. All operators involved commute
   with each other, so the solution is the exponential of the integral,
-  $|\psi\rangle \to \hat K|\psi\rangle$ with $\hat K = e^{-i\frac{k}{2j}\hat J_z^2}$.
+  $|\psi(n^+)\rangle = \hat R\,|\psi(n^-)\rangle$ with $\hat R = e^{-ip\hat J_y}$.
+  \item For $n < t < n+1$, $\hat H = \frac{k}{2j}\hat J_z^2$ does not depend on time, so $|\psi(t)\rangle =
+  e^{-i(t-n)\frac{k}{2j}\hat J_z^2}|\psi(n^+)\rangle$. After the unit time, $|\psi\rangle \to \hat T\,|\psi\rangle$
+  with $\hat T = e^{-i\frac{k}{2j}\hat J_z^2}$.
 \end{enumerate}
 One period is therefore
 \begin{equation}\label{eq:floquet}
-  \boxed{\hat U = \hat K\hat R = \exp\!\Big(-i\frac{k}{2j}\hat J_z^2\Big)\exp\!\big(-ip\hat J_y\big), \qquad
+  \boxed{\hat U = \hat T\hat R = \exp\!\Big(-i\frac{k}{2j}\hat J_z^2\Big)\exp\!\big(-ip\hat J_y\big), \qquad
   |\psi_{n+1}\rangle = \hat U|\psi_n\rangle ,}
 \end{equation}
-first the rotation, then the kick, as in \eqref{eq:map}. In the basis \eqref{eq:jm-basis} the kick is diagonal,
-$\hat K|j,m\rangle = e^{-ikm^2/(2j)}|j,m\rangle$. $\hat U$ is unitary ($\hat U^\dagger\hat U = 1$, $^\dagger$ the conjugate
+first the kick, then the torsion, as in \eqref{eq:map}. In the basis \eqref{eq:jm-basis} the torsion is diagonal,
+$\hat T|j,m\rangle = e^{-ikm^2/(2j)}|j,m\rangle$. $\hat U$ is unitary ($\hat U^\dagger\hat U = 1$, $^\dagger$ the conjugate
 transpose) because it is a product of exponentials of $-i$ times Hermitian operators; hence $\langle\psi_n|\psi_n\rangle$
 is conserved.
 
@@ -1060,10 +1072,10 @@ series.
 s_b] = \frac{i}{j}\,\epsilon_{abc}\,\hat s_c$: the components of $\hat{\bm s}$ commute in the limit $j\to\infty$, and
 $1/j$ plays the role of an effective Planck constant. In the Heisenberg picture an operator evolves as $\hat A \to
 \hat U^\dagger\hat A\hat U$. For the rotation, $\hat R^\dagger\hat J_a\hat R = \sum_b R_y(p)_{ab}\hat J_b$ (the quantum
-rotation rotates the vector operator exactly as \eqref{eq:rotation-y}). For the kick, $\hat J_z$ commutes with $\hat K$,
+rotation rotates the vector operator exactly as \eqref{eq:rotation-y}). For the torsion, $\hat J_z$ commutes with $\hat T$,
 and for $\hat J_+$, using $\hat J_+ f(\hat J_z) = f(\hat J_z - 1)\hat J_+$,
 \begin{equation*}
-  \hat K^\dagger\hat J_+\hat K = e^{i\frac{k}{2j}\hat J_z^2}\,e^{-i\frac{k}{2j}(\hat J_z-1)^2}\,\hat J_+
+  \hat T^\dagger\hat J_+\hat T = e^{i\frac{k}{2j}\hat J_z^2}\,e^{-i\frac{k}{2j}(\hat J_z-1)^2}\,\hat J_+
   = e^{i\frac{k}{2j}(2\hat J_z - 1)}\,\hat J_+ = e^{ik\hat s_z - \frac{ik}{2j}}\,\hat J_+ ,
 \end{equation*}
 i.e.\ $\hat J_x + i\hat J_y$ is rotated about $z$ by the angle $k\hat s_z - k/(2j)$. For $j\to\infty$ this is the
@@ -1130,9 +1142,9 @@ grows to order one.
 \section{Symmetry and quasienergy spectrum}\label{sec:qspectrum}
 
 \paragraph{Parity.} Let $\hat P = e^{-i\pi\hat J_y}$, the quantum version of $S = R_y(\pi)$ of \eqref{eq:symmetry}.
-$\hat P$ commutes with $\hat R = e^{-ip\hat J_y}$ (both are functions of $\hat J_y$). It also commutes with $\hat K$: $\hat
+$\hat P$ commutes with $\hat R = e^{-ip\hat J_y}$ (both are functions of $\hat J_y$). It also commutes with $\hat T$: $\hat
 P^\dagger\hat J_z\hat P = -\hat J_z$ (rotation by $\pi$ about $y$ reverses $z$), so $\hat P^\dagger\hat J_z^2\hat P = \hat
-J_z^2$ and $\hat P^\dagger\hat K\hat P = \hat K$. Hence $[\hat U, \hat P] = 0$. By \eqref{eq:exp-jy} the eigenvalues of
+J_z^2$ and $\hat P^\dagger\hat T\hat P = \hat T$. Hence $[\hat U, \hat P] = 0$. By \eqref{eq:exp-jy} the eigenvalues of
 $\hat P$ are $e^{-i\pi\mu_l}$; consecutive $\mu_l$ differ by one, so $e^{-i\pi\mu_l}$ alternates in sign along $l$. The
 eigenvectors of $\hat J_y$ with odd $l$ span one parity sector, those with even $l$ the other, and $\hat U$ is
 block-diagonal in this basis.
@@ -1207,7 +1219,7 @@ trajectories beyond that time should be read statistically, not pointwise.
 
 \paragraph{Recording.} After \texttt{n\_transient} discarded kicks, the state is stored at kicks $n = 0, m, 2m,
 \dots \le$ \texttt{n\_kicks}, where $m$ = \texttt{save\_every}. The initial point is stored as $n=0$ and
-the map is applied once per kick, so stored points are always ``just after a kick'', as in \cref{sec:map}.
+the map is applied once per kick, so stored points are always ``just before a kick'', as in \cref{sec:map}.
 
 \paragraph{Parallelisation.} Different initial conditions are independent, so the loop over them is parallelised with
 OpenMP. The default configuration ($20\times20$ grid, $500$ kicks) runs in under a second.
@@ -1281,11 +1293,11 @@ numbering of these notes changes.
 \eqref{eq:rotation-y}, and then \texttt{rotate\_z} with the angle $kZ'$, the torsion \eqref{eq:torsion}.
 \texttt{kick\_tangent} is the tangent map \eqref{eq:tangent}; its last line is $R_z(kZ')\,\delta\vs' + k\,\delta Z'\,
 \hat{\bm z}\times\vs_{n+1}$, with $\hat{\bm z}\times\vs = (-Y, X, 0)$:
-\lstinputlisting[firstline=13, lastline=44, firstnumber=13]{../src/classical/map_mod.f90}
+\lstinputlisting[firstline=13, lastline=45, firstnumber=13]{../../src/classical/map_mod.f90}
 
 \paragraph{The equal-area grid.} \texttt{equal\_area\_grid} in \texttt{src/common/sphere\_mod.f90} (used by \texttt{init\_mod}) places cell centres uniformly in
 $Z$ and $\phi$, as required by \eqref{eq:area}:
-\lstinputlisting[firstline=33, lastline=40, firstnumber=33]{../src/common/sphere_mod.f90}
+\lstinputlisting[firstline=33, lastline=40, firstnumber=33]{../../src/common/sphere_mod.f90}
 
 \subsection{Parameters}
 
@@ -1297,7 +1309,7 @@ command-line argument). Missing groups or variables keep their defaults.
   \toprule
   Group & Variable & Meaning \\
   \midrule
-  \texttt{\&system} & \texttt{p}, \texttt{k} & rotation angle $p$ and torsion strength $k$ in \eqref{eq:H} \\
+  \texttt{\&system} & \texttt{p}, \texttt{k} & kick rotation angle $p$ and torsion strength $k$ in \eqref{eq:H} \\
   \texttt{\&simulation} & \texttt{n\_kicks} & number of kicks recorded after the transient \\
    & \texttt{n\_transient} & kicks discarded before recording \\
    & \texttt{save\_every} & store every \texttt{save\_every}-th kick \\
@@ -1411,7 +1423,7 @@ File & Role & Physics \\
 \label{tab:qmodules}
 \end{table}
 
-\paragraph{Algorithm.} (1) Diagonalise $\hat J_y$ once and build $\hat U$ from \eqref{eq:exp-jy} and the diagonal kick.
+\paragraph{Algorithm.} (1) Diagonalise $\hat J_y$ once and build $\hat U$ from \eqref{eq:exp-jy} and the diagonal torsion.
 (2) Start from the coherent state \eqref{eq:coherent} at $(\theta_0,\phi_0)$; its amplitudes are computed from
 logarithms, so large $j$ does not overflow. (3) Apply $\hat U$ \texttt{n\_kicks} times, writing
 $\langle\hat{\vJ}\rangle/j$, the norm and the spread after every kick (\texttt{expectation.dat}) and $Q$ at the kicks
