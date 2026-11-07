@@ -1,12 +1,12 @@
 ! Classical kicked top and qubit chain in three regimes (kicked_top_regimes).
-! The chain has n_q qubits; J_z^2 is realised by all-to-all zz couplings that act
-! for T = 2 pi + eps (forward) and T' = 2 pi - eps (backward), which gives the
-! torsion k = 2 n_q eps. h is the rotation angle p about y.
+! The chain has n_q qubits, J = (1/2) sum_i sigma_i, j = n_q/2:
+! H = k/(2j) sum_{i,l} V_il sigma^z_i sigma^z_l + p J_y sum_n delta(t-n), V_il = 1/4 (H_zz = J_z^2),
+! U = exp(-i k/(2j) H_zz) exp(-i p J_y).
 
 &system
   n_q = 10                 ! number of qubits, j = n_q/2
-  eps = 1.0                ! k = 2 n_q eps
-  h   = 0.02, 0.1, 1.0     ! one run per value: regular, mixed, chaotic (for k = 20)
+  k   = 20.0               ! torsion strength per period
+  p   = 0.02, 0.1, 1.0     ! kick angles about y, one run per value: regular, mixed, chaotic (for k = 20)
 /
 
 &initial

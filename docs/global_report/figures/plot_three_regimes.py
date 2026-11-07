@@ -18,12 +18,12 @@ plt.rcParams.update({"font.size": 10, "axes.labelsize": 11, "savefig.bbox": "tig
 
 def load(i, name):
     """Numeric data of output file name of run i (1-based)."""
-    return np.loadtxt(DATA_DIR / f"h_{i}" / name, ndmin=2)
+    return np.loadtxt(DATA_DIR / f"p_{i}" / name, ndmin=2)
 
 
 def runs():
     """(i, p, k, n_q) of every run."""
-    return [(int(r[0]), r[1], r[2], int(r[4])) for r in np.loadtxt(DATA_DIR / "regimes.dat", ndmin=2)]
+    return [(int(r[0]), r[1], r[2], int(r[3])) for r in np.loadtxt(DATA_DIR / "regimes.dat", ndmin=2)]
 
 
 def phase_axes(ax):

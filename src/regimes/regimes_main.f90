@@ -1,11 +1,12 @@
-! Driver of the three-regime study: for every rotation angle h = p in the
+! Driver of the three-regime study: for every rotation angle p in the
 ! config it runs
 !   S1  the classical kicked top (Poincare section on a grid and the orbit of
-!       the initial state), with the torsion k = 2 n_q eps of the chain;
-!   S3  the qubit chain, n_q spins 1/2 with all-to-all zz couplings, evolved by
-!       its Floquet step on the state vector only, with Husimi snapshots (S2);
-!   S4  time reversal of the chain: t_r forward steps with T = 2 pi + eps,
-!       then t_r backward steps with T' = 2 pi - eps and -h.
+!       the initial state), with the torsion k of the chain;
+!   S3  the qubit chain, n_q spins 1/2 with all-to-all zz couplings V_il = 1/4,
+!       evolved by its Floquet step on the state vector only, with Husimi
+!       snapshots (S2);
+!   S4  time reversal of the chain: t_r forward steps U, then t_r backward
+!       steps U^dagger.
 ! Usage: kicked_top_regimes [namelist file]   (default config_regimes.nml)
 program kicked_top_regimes
   use kinds_mod, only: wp
@@ -19,14 +20,14 @@ program kicked_top_regimes
   use regimes_config_mod, only: rconfig_t, read_regimes_config, str_len
   use regimes_io_mod, only: run_dir, write_regimes, write_chain, write_husimi, write_summary
   use chain_state_mod, only: ferromagnetic_direction, product_coherent_state, dicke_amplitudes
-  use chain_floquet_mod, only: forward_step, backward_step
+  use chain_floquet_mod, only: uniform_coupling, zz_energies, forward_step, backward_step
   use chain_observables_mod, only: fidelity, site_spins, total_spin
   implicit none
 
   type(rconfig_t) :: cfg
   character(len=str_len) :: cfg_path
   real(wp) :: theta0, phi0
-  real(wp), allocatable :: hus_theta(:), hus_phi(:)
+  real(wp), allocatable :: hus_theta(:), hus_phi(:), e_zz(:)
   integer :: i
 
   cfg_path = 'config_regimes.nml'
@@ -40,21 +41,23 @@ program kicked_top_regimes
   allocate(hus_theta(cfg%hus_n_theta*cfg%hus_n_phi), hus_phi(cfg%hus_n_theta*cfg%hus_n_phi))
   call equal_area_grid(cfg%hus_n_theta, cfg%hus_n_phi, hus_theta, hus_phi)
 
-  do i = 1, size(cfg%h)
-    call run_classical(cfg%h(i), run_dir(cfg, i)//'/classical')
-    call run_chain(cfg%h(i), run_dir(cfg, i)//'/chain')
+  e_zz = zz_energies(cfg%n_q, uniform_coupling(cfg%n_q))
+
+  do i = 1, size(cfg%p)
+    call run_classical(cfg%p(i), run_dir(cfg, i)//'/classical')
+    call run_chain(cfg%p(i), run_dir(cfg, i)//'/chain')
   end do
 
 contains
 
-  ! S1: classical map, lecture notes eq. (20) [eq:map], with p = h and k = 2 n_q eps.
-  subroutine run_classical(h, dir)
-    real(wp), intent(in) :: h
+  ! S1: classical map, lecture notes eq. (20) [eq:map], with the p and k of the chain.
+  subroutine run_classical(p, dir)
+    real(wp), intent(in) :: p
     character(len=*), intent(in) :: dir
     type(config_t) :: c
     real(wp), allocatable :: s0(:,:), orbit(:,:,:)
 
-    c%p = h
+    c%p = p
     c%k = cfg%k
     c%n_kicks = cfg%n_kicks
     c%n_transient = 0
@@ -82,8 +85,8 @@ contains
   end subroutine run_classical
 
   ! S3/S4: forward evolution for t_r steps, then backward evolution for t_r steps.
-  subroutine run_chain(h, dir)
-    real(wp), intent(in) :: h
+  subroutine run_chain(p, dir)
+    real(wp), intent(in) :: p
     character(len=*), intent(in) :: dir
     complex(wp), allocatable :: psi0(:), psi(:)
     real(wp), allocatable :: obs(:,:), q(:,:)
@@ -98,8 +101,8 @@ contains
     sym_dev = 0.0_wp
 
     do t = 0, 2*cfg%t_r
-      if (t >= 1 .and. t <= cfg%t_r) call forward_step(psi, cfg%n_q, h, cfg%eps)
-      if (t > cfg%t_r) call backward_step(psi, cfg%n_q, h, cfg%eps)
+      if (t >= 1 .and. t <= cfg%t_r) call forward_step(psi, cfg%n_q, p, cfg%k, e_zz)
+      if (t > cfg%t_r) call backward_step(psi, cfg%n_q, p, cfg%k, e_zz)
 
       sig = site_spins(psi, cfg%n_q)
       obs(1, t) = fidelity(psi0, psi)
@@ -116,16 +119,16 @@ contains
     end do
 
     call make_dir(dir)
-    call write_chain(cfg, h, dir, obs)
-    call write_husimi(cfg, h, dir, steps, hus_theta, hus_phi, q)
-    call write_summary(cfg, h, dir, &
+    call write_chain(cfg, p, dir, obs)
+    call write_husimi(cfg, p, dir, steps, hus_theta, hus_phi, q)
+    call write_summary(cfg, p, dir, &
       [character(len=24) :: 'F(t_r)', 'F(2t_r)', 'max|norm-1|', 'max|S^2-j(j+1)|', &
        'max(1-symmetric_weight)', 'husimi_norm(0)', 'husimi_norm(t_r)', 'husimi_norm(2t_r)'], &
       [obs(1, cfg%t_r), obs(1, 2*cfg%t_r), maxval(abs(obs(2, :) - 1.0_wp)), &
        maxval(abs(obs(9, :) - j*(j + 1.0_wp))), sym_dev, &
        husimi_norm(q(:, 1), j), husimi_norm(q(:, 2), j), husimi_norm(q(:, 3), j)])
 
-    write(*, '(a,f0.4,a,f0.4,a,es10.3,a)') 'kicked_top_regimes: h = ', h, ', k = ', cfg%k, &
+    write(*, '(a,f0.4,a,f0.4,a,es10.3,a)') 'kicked_top_regimes: p = ', p, ', k = ', cfg%k, &
       ', F(2t_r) - 1 = ', obs(1, 2*cfg%t_r) - 1.0_wp, ' -> '//dir
   end subroutine run_chain
 

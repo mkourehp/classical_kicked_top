@@ -1,43 +1,65 @@
-! Floquet steps of the qubit chain, applied to the state vector only (no
+! Floquet step of the qubit chain, applied to the state vector only (no
 ! Hamiltonian or 2**n_q x 2**n_q matrix is built). Basis as in chain_state_mod.
 !
-! J_z**2 is realised by static all-to-all couplings,
-!   H_zz = sum_{i<l} sigma^z_i sigma^z_l = 2 S_z**2 - n_q/2 = (M**2 - n_q)/2,   M = 2u - n_q,
-! with integer eigenvalues, so exp(-i (2 pi + eps) H_zz) = exp(-i eps H_zz):
-! the coupling acting for T = 2 pi + eps is the kicked-top torsion with
-! k/(2j) = 2 eps, i.e. k = 2 n_q eps, lecture notes eq. (39) [eq:floquet].
-! The rotation exp(-i h S_y) is a product of single-qubit rotations; h = p.
-!
-! Time reversal (as in spin_chain): T -> T' = 2 pi - eps, h -> -h and the
-! order of the two factors swapped, so that backward_step = forward_step^dagger.
+! The chain realises the kicked top with J = (1/2) sum_i sigma_i, j = n_q/2:
+!   H(t) = (k/(2j)) H_zz + p J_y sum_n delta(t-n),   H_zz = sum_{i,l} V_il sigma^z_i sigma^z_l,
+! with i and l running over all qubits (i = l included). The couplings act
+! continuously; at integer times a pulse rotates every qubit about y by p.
+! For V_il = 1/4, H_zz = (1/2 sum_i sigma^z_i)**2 = J_z**2. Sampled just before
+! each kick, one period is
+!   U = exp(-i (k/(2j)) H_zz) exp(-i p J_y),
+! the kicked-top Floquet operator of floquet_mod, lecture notes eq. (39) [eq:floquet].
 module chain_floquet_mod
-  use kinds_mod, only: wp, two_pi
+  use kinds_mod, only: wp
   implicit none
   private
-  public :: zz_coupling, rotate_y, forward_step, backward_step
+  public :: uniform_coupling, zz_energies, zz_coupling, rotate_y, forward_step, backward_step
 
 contains
 
-  ! psi -> exp(-i t H_zz) psi. H_zz is diagonal and depends only on the number
-  ! u of up qubits, so one phase per u.
-  subroutine zz_coupling(psi, n_q, t)
-    complex(wp), intent(inout) :: psi(0:)
+  ! V_il = 1/4 for all i, l: H_zz = J_z**2 (kicked-top limit).
+  pure function uniform_coupling(n_q) result(v)
     integer, intent(in) :: n_q
-    real(wp), intent(in) :: t
-    complex(wp) :: phase(0:n_q)
-    integer :: u, b
+    real(wp) :: v(n_q, n_q)
 
-    do u = 0, n_q
-      phase(u) = exp(cmplx(0.0_wp, -t*real(((2*u - n_q)**2 - n_q)/2, wp), wp))
+    v = 0.25_wp
+  end function uniform_coupling
+
+  ! Diagonal of H_zz: e(b) = sum_{i,l} V_il z_i z_l, z_i = +1 if bit i-1 of b
+  ! is 1 (qubit i up) and -1 otherwise. Computed once per run.
+  function zz_energies(n_q, v) result(e)
+    integer, intent(in) :: n_q
+    real(wp), intent(in) :: v(n_q, n_q)
+    real(wp), allocatable :: e(:)
+    real(wp) :: z(n_q)
+    integer :: b, i
+
+    allocate(e(0:2**n_q - 1))
+    !$omp parallel do private(z, i) schedule(static)
+    do b = 0, 2**n_q - 1
+      do i = 1, n_q
+        z(i) = merge(1.0_wp, -1.0_wp, btest(b, i - 1))
+      end do
+      e(b) = dot_product(z, matmul(v, z))
     end do
+    !$omp end parallel do
+  end function zz_energies
+
+  ! psi -> exp(-i t H_zz) psi, with e the diagonal of H_zz from zz_energies.
+  subroutine zz_coupling(psi, e, t)
+    complex(wp), intent(inout) :: psi(0:)
+    real(wp), intent(in) :: e(0:)
+    real(wp), intent(in) :: t
+    integer :: b
+
     !$omp parallel do schedule(static)
     do b = 0, size(psi) - 1
-      psi(b) = psi(b)*phase(popcnt(b))
+      psi(b) = psi(b)*cmplx(cos(t*e(b)), -sin(t*e(b)), wp)
     end do
     !$omp end parallel do
   end subroutine zz_coupling
 
-  ! psi -> exp(-i alpha S_y) psi = prod_i exp(-i alpha/2 sigma^y_i) psi.
+  ! psi -> exp(-i alpha J_y) psi = prod_i exp(-i alpha/2 sigma^y_i) psi.
   ! On qubit i, in the basis (up, down): [[cos(alpha/2), -sin(alpha/2)], [sin(alpha/2), cos(alpha/2)]],
   ! applied to every pair of basis states that differ only in bit i.
   ! Rotates the spin about y by alpha, lecture notes eq. (17) [eq:rotation-y].
@@ -65,27 +87,29 @@ contains
     end do
   end subroutine rotate_y
 
-  ! One forward period: U_f = exp(-i (2 pi + eps) H_zz) exp(-i h S_y)
-  ! (rotation first, then the couplings, as in the kicked-top map).
-  subroutine forward_step(psi, n_q, h, eps)
+  ! One period: U = exp(-i (k/(2j)) H_zz) exp(-i p J_y), j = n_q/2
+  ! (first the kick, then the couplings for one period).
+  subroutine forward_step(psi, n_q, p, k, e)
     complex(wp), intent(inout) :: psi(0:)
     integer, intent(in) :: n_q
-    real(wp), intent(in) :: h
-    real(wp), intent(in) :: eps
+    real(wp), intent(in) :: p
+    real(wp), intent(in) :: k
+    real(wp), intent(in) :: e(0:)
 
-    call rotate_y(psi, n_q, h)
-    call zz_coupling(psi, n_q, two_pi + eps)
+    call rotate_y(psi, n_q, p)
+    call zz_coupling(psi, e, k/n_q)
   end subroutine forward_step
 
-  ! One backward period: U_b = exp(+i h S_y) exp(-i (2 pi - eps) H_zz) = U_f^dagger.
-  subroutine backward_step(psi, n_q, h, eps)
+  ! Inverse period: U^dagger = exp(+i p J_y) exp(+i (k/(2j)) H_zz).
+  subroutine backward_step(psi, n_q, p, k, e)
     complex(wp), intent(inout) :: psi(0:)
     integer, intent(in) :: n_q
-    real(wp), intent(in) :: h
-    real(wp), intent(in) :: eps
+    real(wp), intent(in) :: p
+    real(wp), intent(in) :: k
+    real(wp), intent(in) :: e(0:)
 
-    call zz_coupling(psi, n_q, two_pi - eps)
-    call rotate_y(psi, n_q, -h)
+    call zz_coupling(psi, e, -k/n_q)
+    call rotate_y(psi, n_q, -p)
   end subroutine backward_step
 
 end module chain_floquet_mod

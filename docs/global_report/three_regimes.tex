@@ -19,13 +19,13 @@
 \maketitle
 
 \begin{abstract}
-The same kicked top is studied in three regimes, regular, mixed and chaotic, selected by the free rotation angle
-$p$ at fixed kick strength $k$. Classically, the regimes are read off from Poincar\'e sections and explained with a
+The same kicked top is studied in three regimes, regular, mixed and chaotic, selected by the kick angle $p$ at
+fixed torsion strength $k$. Classically, the regimes are read off from Poincar\'e sections and explained with a
 small-$p$ reduction of the map to the standard map. Quantum mechanically, the top of spin $j=n_q/2$ is realised by
-$n_q$ qubits: the free rotation is a rotation of every qubit and the kick $J_z^2$ is a static all-to-all Ising
-coupling. Because the coupling has an integer spectrum, letting it act for a time $2\pi+\varepsilon$ gives the kick, and
-letting it act for $2\pi-\varepsilon$ undoes it. This turns a forward evolution into an exact time reversal. The
-regimes are compared through the Husimi distribution, the fidelity and the entanglement of a single qubit.
+$n_q$ qubits: the torsion $J_z^2$ is a static all-to-all Ising coupling $\sum_{i,l}V_{il}\sigma^z_i\sigma^z_l$ with
+$V_{il}=1/4$, acting during the whole period, and the kick is a pulse that rotates every qubit about $y$. Running the
+chain backwards gives an exact time reversal. The regimes are compared through the Husimi distribution, the fidelity
+and the entanglement of a single qubit.
 \end{abstract}
 
 \tableofcontents
@@ -34,14 +34,14 @@ regimes are compared through the Husimi distribution, the fidelity and the entan
 \section{The model}\label{sec:model}
 %=====================================================================
 
-A spin $\bm J=(J_x,J_y,J_z)$ of length quantum number $j$ (so $\bm J^2=j(j+1)$, $\hbar=1$) rotates freely about the
-$y$ axis and is kicked once per unit time by a torsion about the $z$ axis:
+A spin $\bm J=(J_x,J_y,J_z)$ of length quantum number $j$ (so $\bm J^2=j(j+1)$, $\hbar=1$) undergoes a continuous
+torsion about the $z$ axis and is kicked once per unit time by a rotation about the $y$ axis:
 \begin{equation}\label{eq:H}
-  H(t) = p\,J_y + \frac{k}{2j}\,J_z^2\sum_{n=-\infty}^{\infty}\delta(t-n).
+  H(t) = \frac{k}{2j}\,J_z^2 + p\,J_y\sum_{n=-\infty}^{\infty}\delta(t-n).
 \end{equation}
-Here $p$ is the rotation angle per period (the free rotation velocity), $k$ the kick strength and $\delta$ the
-Dirac delta. Integrating the Schr\"odinger equation over one period, starting just after a kick, the free part acts
-for unit time and the kick acts instantaneously. One period is therefore the Floquet operator
+Here $k$ is the torsion strength per period, $p$ the kick angle and $\delta$ the Dirac delta. Integrating the
+Schr\"odinger equation over one period, starting just before a kick, the kick acts instantaneously and the free
+torsion then acts for unit time. One period is therefore the Floquet operator
 \begin{equation}\label{eq:U}
   U = e^{-i\frac{k}{2j}J_z^2}\,e^{-ipJ_y},\qquad \psi(t) = U^t\psi(0),\quad t=0,1,2,\dots
 \end{equation}
@@ -54,19 +54,18 @@ The classical top is the same Hamiltonian for a classical vector $\bm J$. All re
 \end{equation}
 a point on the unit sphere with polar angle $\theta$ and azimuth $\phi$. The pair $(\phi,Z)$ is canonical, so phase
 space is the rectangle $-\pi<\phi\le\pi$, $-1\le Z\le 1$ with area $4\pi$, and areas in it are conserved. Over one
-period the free motion rotates $\bm s$ about $y$ by $p$:
+period the kick first rotates $\bm s$ about $y$ by $p$:
 \begin{equation}\label{eq:rot}
   X' = X\cos p + Z\sin p,\qquad Y' = Y,\qquad Z' = -X\sin p + Z\cos p .
 \end{equation}
-The kick then rotates it about $z$ by the angle $kZ'$, which leaves $Z$ unchanged:
+The free torsion then rotates it about $z$ by the angle $kZ'$, which leaves $Z$ unchanged:
 \begin{equation}\label{eq:kick}
   Z_{t+1} = Z',\qquad \phi_{t+1} = \phi' + kZ' ,
 \end{equation}
 where $\phi'$ is the azimuth of $(X',Y')$. The classical map is \cref{eq:rot,eq:kick}. Its quantum counterpart is
 \cref{eq:U}, and $1/j$ plays the role of Planck's constant.
 
-Throughout, $k=20$ (the value that the qubit realisation of \cref{sec:qubits} gives for $n_q=10$ qubits) and only $p$ is
-varied:
+Throughout, $k=20$ and only $p$ is varied:
 \begin{equation}
   p = 0.02\ \text{(regular)},\qquad p = 0.1\ \text{(mixed)},\qquad p = 1\ \text{(chaotic)}.
 \end{equation}
@@ -220,50 +219,50 @@ A state that starts in the totally symmetric subspace, of dimension $2j+1$ and c
 Within this subspace the $2^{n_q}$-dimensional chain is exactly the spin-$j$ top. Starting from the all-up state, the
 chain is therefore the quantum top of \cref{sec:quantum} with $j=5$ ($n_q=10$) or $j=6$ ($n_q=12$).
 
-\subsection{Free rotation: single-qubit pulses}
+\subsection{Hamiltonian of the chain}
+
+The chain has the Hamiltonian of \cref{eq:H}, with $J_z^2$ replaced by an Ising coupling between all pairs of qubits,
+\begin{equation}\label{eq:Hq}
+  H(t) = \frac{k}{2j}\,H_{zz} + p\,J_y\sum_{n=-\infty}^{\infty}\delta(t-n),\qquad
+  H_{zz} = \sum_{i,l=1}^{n_q} V_{il}\,\sigma^z_i\sigma^z_l ,
+\end{equation}
+where $i$ and $l$ run over all qubits ($i=l$ included) and $V_{il}$ is the coupling between qubits $i$ and $l$. Here
+the coupling is the same for all pairs, $V_{il}=1/4$. Squaring \cref{eq:Jq},
+\begin{equation}\label{eq:Hzz}
+  J_z^2 = \frac14\sum_{i,l}\sigma^z_i\sigma^z_l ,\qquad\text{so}\qquad H_{zz} = J_z^2 \quad (V_{il}=1/4),
+\end{equation}
+and \cref{eq:Hq} is exactly \cref{eq:H}. On a basis state with $u$ qubits up, $\sigma^z_i=z_i=\pm1$ and
+$H_{zz}=\sum_{i,l}V_{il}z_iz_l = m^2$ with $m=u-n_q/2$. The terms with $i=l$ give $\sum_iV_{ii}=n_q/4$, a constant
+that only adds a global phase; they are kept so that $H_{zz}=J_z^2$ holds without any phase.
+
+\subsection{Kick: single-qubit pulses}
 
 The terms of $J_y$ in \cref{eq:Jq} commute, so the exponential factorises:
 \begin{equation}
   e^{-ipJ_y} = \prod_{i=1}^{n_q} e^{-i\frac p2\sigma^y_i}.
 \end{equation}
-The free rotation is the same rotation by $p$ about $y$, applied to every qubit independently.
+The kick is the same rotation by $p$ about $y$, applied to every qubit independently.
 
-\subsection{Kick: all-to-all Ising coupling}
+\subsection{Free torsion: all-to-all Ising coupling}
 
-Squaring \cref{eq:Jq} and using $(\sigma^z_i)^2=1$,
-\begin{equation}
-  J_z^2 = \frac14\sum_{i,l}\sigma^z_i\sigma^z_l = \frac{n_q}{4} + \frac12 H_{zz},\qquad
-  H_{zz} = \sum_{i<l}\sigma^z_i\sigma^z_l .
+Between two kicks only the coupling acts, for unit time:
+\begin{equation}\label{eq:torq}
+  e^{-i\frac{k}{2j}H_{zz}} ,\qquad \frac{k}{2j} = \frac{k}{n_q}.
 \end{equation}
-$H_{zz}$ is a static Ising coupling of unit strength between all pairs of qubits. On a basis state with $u$ qubits up,
-$J_z = m = u-n_q/2$ and
-\begin{equation}\label{eq:Hzz}
-  H_{zz} = 2m^2-\frac{n_q}{2} = 2u(u-n_q)+\frac{n_q(n_q-1)}{2},
+$H_{zz}$ is diagonal in the basis $|b\rangle$ of up and down qubits, so this multiplies every basis state by the phase
+$e^{-i(k/n_q)\sum_{i,l}V_{il}z_iz_l}$. One period of the chain, starting just before a kick, is
+\begin{equation}\label{eq:Uq}
+  U_{\rm chain} = e^{-i\frac{k}{2j}H_{zz}}\prod_{i}e^{-i\frac p2\sigma^y_i} ,
 \end{equation}
-an integer, because $n_q(n_q-1)$ is even. Consequently
-\begin{equation}
-  e^{-i2\pi H_{zz}} = 1 .
-\end{equation}
-Let the coupling act for the time $T=2\pi+\varepsilon$. Then
-\begin{equation}\label{eq:kickq}
-  e^{-iTH_{zz}} = e^{-i\varepsilon H_{zz}} = e^{i\varepsilon n_q/2}\;e^{-i2\varepsilon J_z^2}.
-\end{equation}
-Apart from a global phase, this is the kick of \cref{eq:U} with $k/(2j)=2\varepsilon$, i.e.
-\begin{equation}\label{eq:k}
-  k = 4j\varepsilon = 2n_q\varepsilon .
-\end{equation}
-For $\varepsilon=1$: $k=20$ for $n_q=10$ and $k=24$ for $n_q=12$. One forward period of the chain is
-\begin{equation}\label{eq:Uf}
-  U_f = e^{-i(2\pi+\varepsilon)H_{zz}}\prod_{i}e^{-i\frac p2\sigma^y_i} ,
-\end{equation}
-which equals $U$ of \cref{eq:U} up to a phase. Numerically, $\langle\bm J\rangle$ of the chain agrees with the
-spin-$j$ top to $10^{-13}$.
+which for $V_{il}=1/4$ equals $U$ of \cref{eq:U} exactly. Numerically, for $n_q=1,\dots,14$, several $p$ and $k$, and
+coherent initial states, the amplitudes of the chain on the symmetric states agree with those of the spin-$j$ top to
+$3\times10^{-13}$ over 50 periods.
 
 \paragraph{Mean-field picture.}
-In \cref{eq:kickq}, qubit $i$ feels $\varepsilon\,\sigma^z_i\sum_{l\ne i}\sigma^z_l$, a rotation about $z$ by the angle
-$2\varepsilon\sum_{l\ne i}\sigma^z_l$. Replacing the other qubits by their mean, $\sum_{l\ne i}\sigma^z_l\approx
-2\langle J_z\rangle = n_qZ$, gives the angle $2n_q\varepsilon Z = kZ$. This is the classical torsion of \cref{eq:kick}:
-each qubit precesses in the field of all the others.
+In \cref{eq:torq}, the terms that contain qubit $i$ are $(k/n_q)\,2V_{il}\,\sigma^z_i\sigma^z_l$ with $l\ne i$, so qubit
+$i$ is rotated about $z$ by the angle $(k/n_q)\sum_{l\ne i}\sigma^z_l$. Replacing the other qubits by their mean,
+$\sum_{l\ne i}\sigma^z_l\approx 2\langle J_z\rangle = n_qZ$, gives the angle $kZ$. This is the classical torsion of
+\cref{eq:kick}: each qubit precesses in the field of all the others.
 
 %=====================================================================
 \section{Time reversal}\label{sec:reversal}
