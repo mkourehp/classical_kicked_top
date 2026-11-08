@@ -30,8 +30,8 @@ class RegimesPostProcessor:
         return [(int(r[0]), r[1], r[2]) for r in self.regimes]
 
     def _t_r(self):
-        """Reversal step t_r, read from the length of the chain time series (2 t_r + 1 steps)."""
-        return (len(self._load(1, "chain/fidelity.dat")) - 1) // 2
+        """Reversal step t_r, read from the length of the chain time series (2 t_r + 3 steps)."""
+        return (len(self._load(1, "chain/fidelity.dat")) - 3) // 2
 
     def plot_sections(self):
         """Classical Poincare sections in (phi, Z), with the orbit of the initial state in red."""

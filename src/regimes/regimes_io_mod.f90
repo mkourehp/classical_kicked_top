@@ -7,7 +7,7 @@
 !   p_<i>/chain/site_spins.dat        t  <sx_1..n_q>  <sy_1..n_q>  <sz_1..n_q>
 !   p_<i>/chain/husimi.dat            t  phi Z X Y Q   (blank line between snapshots)
 !   p_<i>/chain/summary.dat           name value (correctness checks)
-! Steps t = 0 .. t_r are forward, t_r+1 .. 2 t_r backward.
+! Steps t = 0 .. t_r are forward, t_r+1 .. 2 t_r + 2 backward.
 module regimes_io_mod
   use kinds_mod, only: wp
   use regimes_config_mod, only: rconfig_t
@@ -61,7 +61,7 @@ contains
       ', k = ', cfg%k, ', t_r = ', cfg%t_r
   end function title
 
-  ! obs(:, t): F, norm, <S_a>, <S_a^2>, <S^2>, site spins (3*n_q), t = 0 .. 2 t_r.
+  ! obs(:, t): F, norm, <S_a>, <S_a^2>, <S^2>, site spins (3*n_q), t = 0 .. 2 t_r + 2.
   subroutine write_chain(cfg, p, dir, obs)
     type(rconfig_t), intent(in) :: cfg
     real(wp), intent(in) :: p

@@ -21,7 +21,7 @@
 /
 
 &chain
-  t_r = 30                 ! forward steps before the time reversal (2 t_r steps in total)
+  t_r = 30                 ! forward steps before the time reversal (then t_r + 2 backward steps)
 /
 
 &husimi

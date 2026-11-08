@@ -268,29 +268,56 @@ $\sum_{l\ne i}\sigma^z_l\approx 2\langle J_z\rangle = n_qZ$, gives the angle $kZ
 \section{Time reversal}\label{sec:reversal}
 %=====================================================================
 
-To run the evolution backwards one needs $U_f^{-1} = U_f^\dagger$, which contains $e^{+i\varepsilon H_{zz}}$, i.e.\ the
-coupling acting for a negative time. The integer spectrum avoids this: by \cref{eq:Hzz}, acting for the positive time
-$T'=2\pi-\varepsilon$ is equivalent to acting for $-\varepsilon$. The backward period changes the sign of $p$ and the
-order of the two factors:
+To run the evolution backwards one needs
+\begin{equation}
+  U_{\rm chain}^{-1} = U_{\rm chain}^\dagger = \prod_{i}e^{+i\frac p2\sigma^y_i}\;e^{+i\frac{k}{2j}H_{zz}} .
+\end{equation}
+The sign of the pulse is easily reversed, $p\to-p$. The coupling, however, is always on with a fixed sign, so
+$e^{+i\frac{k}{2j}H_{zz}}$ cannot be obtained by flipping it. The spectrum of $H_{zz}$ avoids this. By \cref{eq:Hzz}
+its eigenvalues are $m^2$ with $m=u-n_q/2$. For $n_q$ even all $m$ are integers, so $e^{-i2\pi m^2}=1$. For $n_q$ odd
+all $m$ are half-integers, $m=l+\frac12$, so $m^2=l^2+l+\frac14$ and $e^{-i2\pi m^2}=e^{-i\pi/2}$ for every basis
+state. Hence
+\begin{equation}\label{eq:2pi}
+  e^{-i2\pi H_{zz}} = \gamma,\qquad \gamma = \begin{cases} 1 & n_q \text{ even},\\ -i & n_q\text{ odd},\end{cases}
+\end{equation}
+a global phase, and letting the coupling act with $2\pi-\frac{k}{2j}$ instead of $\frac{k}{2j}$ gives
+\begin{equation}
+  e^{-i(2\pi-\frac{k}{2j})H_{zz}} = \gamma\,e^{+i\frac{k}{2j}H_{zz}} .
+\end{equation}
+As in the spin chain, the backward period therefore changes $\frac{k}{2j}\to2\pi-\frac{k}{2j}$, i.e.\
+$k\to2\pi n_q-k$, changes the sign of $p$, and swaps the order of the two factors:
 \begin{equation}\label{eq:Ub}
-  U_b = \prod_{i}e^{+i\frac p2\sigma^y_i}\;e^{-i(2\pi-\varepsilon)H_{zz}} .
+  U_b = \prod_{i}e^{+i\frac p2\sigma^y_i}\;e^{-i(2\pi-\frac{k}{2j})H_{zz}} = \gamma\,U_{\rm chain}^\dagger .
 \end{equation}
 Then
 \begin{equation}
-  U_bU_f = e^{ipJ_y}\,e^{-i4\pi H_{zz}}\,e^{-ipJ_y} = 1 ,
+  U_bU_{\rm chain} = e^{+ipJ_y}\,e^{-i(2\pi-\frac{k}{2j})H_{zz}}\,e^{-i\frac{k}{2j}H_{zz}}\,e^{-ipJ_y}
+  = e^{+ipJ_y}\,e^{-i2\pi H_{zz}}\,e^{-ipJ_y} = \gamma ,
 \end{equation}
-so $U_b = U_f^\dagger$ exactly, in every regime. In the language of the top, $T\to T'$ is $k\to-k$, achieved without
-changing the sign of the coupling.
+in every regime. In the language of the top, the backward period is $k\to-k$ and $p\to-p$, achieved without changing
+the sign of the coupling. At the turning point, the coupling of the last forward period and that of the first backward
+period combine into $e^{-i2\pi H_{zz}}=\gamma$: the coupling simply stays on, and the following pulses have the
+opposite sign. With the coupling strength fixed, a backward period lasts $(2\pi-\frac{k}{2j})/\frac{k}{2j}$ forward
+periods, about $2.14$ for $n_q=10$, $k=20$. This needs $\frac{k}{2j}<2\pi$. The construction relies on
+\cref{eq:2pi}, which holds for $V_{il}=1/4$; for general couplings it requires the eigenvalues of $H_{zz}$ to differ by
+integers.
 
 \paragraph{Protocol.}
-Starting from $\psi_0=|{\uparrow\cdots\uparrow}\rangle$, apply $U_f$ for $t_r$ periods and then $U_b$ for $t_r$ periods:
+Starting from $\psi_0=|{\uparrow\cdots\uparrow}\rangle$, apply $U_{\rm chain}$ for $t_r$ periods and then $U_b$ for
+$t_r+2$ periods:
 \begin{equation}
-  \psi(t) = U_f^{\,t}\psi_0\quad (0\le t\le t_r),\qquad
-  \psi(t_r+s) = U_b^{\,s}U_f^{\,t_r}\psi_0 = U_f^{\,t_r-s}\psi_0 = \psi(t_r-s)\quad(0\le s\le t_r).
+  \psi(t) = U_{\rm chain}^{\,t}\psi_0\quad (0\le t\le t_r),\qquad
+  \psi(t_r+s) = U_b^{\,s}U_{\rm chain}^{\,t_r}\psi_0 = \gamma^s\,U_{\rm chain}^{\,t_r-s}\psi_0
+  \quad(0\le s\le t_r+2).
 \end{equation}
-Two consequences follow. The state returns, $\psi(2t_r)=\psi_0$. And every quantity is mirror-symmetric about $t_r$:
-its value at $t_r+s$ equals its value at $t_r-s$. Without imperfections the echo is perfect in all three regimes, so the
-regimes differ only in what happens between $0$ and $2t_r$. Here $t_r=30$.
+Three consequences follow. The state returns, $\psi(2t_r)=\gamma^{t_r}\psi_0$, so $F(2t_r)=1$. Every quantity is
+mirror-symmetric about $t_r$: its value at $t_r+s$ equals its value at $t_r-s$, since $\psi(t_r+s)=\gamma^s\psi(t_r-s)$
+for $s\le t_r$. And the last two steps continue past the initial state, $\psi(2t_r+s')=\gamma^{t_r+s'}U_{\rm
+chain}^{-s'}\psi_0$ for $s'=1,2$, so that
+$F(2t_r+s')=|\langle\psi_0|U_{\rm chain}^{-s'}\psi_0\rangle|^2=|\langle\psi_0|U_{\rm chain}^{\,s'}\psi_0\rangle|^2=F(s')$.
+Without imperfections the echo is perfect in all three regimes, so the regimes differ only in what happens between
+$0$ and $2t_r$. Here $t_r=30$. Numerically, $U_b=\gamma U_{\rm chain}^\dagger$ holds to $4\times10^{-14}$ per step for
+$n_q=1,\dots,14$, several $p$ and $k$, and coherent initial states.
 
 \paragraph{Measures.}
 The fidelity
@@ -315,8 +342,8 @@ entanglement created by the coupling. The total spin $\langle\bm J^2\rangle = j(
 \begin{figure}[h]
   \centering
   \includegraphics[width=0.8\textwidth]{figures/three_regimes_echo.pdf}
-  \caption{Fidelity $F(t)$ (top) and single-qubit Bloch-vector length $r(t)$ (bottom) for $n_q=10$, $\varepsilon=1$
-  ($k=20$), reversal at $t_r=30$ (dashed). Dotted: $1/(2j+1)$.}
+  \caption{Fidelity $F(t)$ (top) and single-qubit Bloch-vector length $r(t)$ (bottom) for $n_q=10$, $k=20$,
+  reversal at $t_r=30$ (dashed), followed by $t_r+2$ backward periods. Dotted: $1/(2j+1)$.}
   \label{fig:echo}
 \end{figure}
 
@@ -343,6 +370,6 @@ entanglement created by the coupling. The total spin $\langle\bm J^2\rangle = j(
   about 2 for a coherent state.)
 \end{description}
 In all three regimes the backward leg mirrors the forward one, and $F(2t_r)=1$ and $Q(2t_r)=Q(0)$ hold to
-$10^{-13}$ (\cref{fig:echo,fig:husimi}).
+$10^{-13}$ (\cref{fig:echo,fig:husimi}). The two extra backward periods reproduce $F(1)$ and $F(2)$.
 
 \end{document}

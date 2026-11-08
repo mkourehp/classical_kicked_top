@@ -9,8 +9,13 @@
 ! each kick, one period is
 !   U = exp(-i (k/(2j)) H_zz) exp(-i p J_y),
 ! the kicked-top Floquet operator of floquet_mod, lecture notes eq. (39) [eq:floquet].
+!
+! Time reversal (as in spin_chain): the sign of the couplings cannot be flipped,
+! so the coefficient k/(2j) -> 2 pi - k/(2j), p -> -p and the two factors are
+! swapped. The eigenvalues m**2 of H_zz (m all integer or all half-integer) give
+! exp(-i 2 pi H_zz) = global phase, so backward_step = U^dagger up to that phase.
 module chain_floquet_mod
-  use kinds_mod, only: wp
+  use kinds_mod, only: wp, two_pi
   implicit none
   private
   public :: uniform_coupling, zz_energies, zz_coupling, rotate_y, forward_step, backward_step
@@ -100,7 +105,7 @@ contains
     call zz_coupling(psi, e, k/n_q)
   end subroutine forward_step
 
-  ! Inverse period: U^dagger = exp(+i p J_y) exp(+i (k/(2j)) H_zz).
+  ! Backward period: exp(+i p J_y) exp(-i (2 pi - k/(2j)) H_zz) = U^dagger (up to a global phase).
   subroutine backward_step(psi, n_q, p, k, e)
     complex(wp), intent(inout) :: psi(0:)
     integer, intent(in) :: n_q
@@ -108,7 +113,7 @@ contains
     real(wp), intent(in) :: k
     real(wp), intent(in) :: e(0:)
 
-    call zz_coupling(psi, e, -k/n_q)
+    call zz_coupling(psi, e, two_pi - k/n_q)
     call rotate_y(psi, n_q, -p)
   end subroutine backward_step
 
