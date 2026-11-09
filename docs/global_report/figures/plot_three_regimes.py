@@ -1,6 +1,6 @@
 """Plots the figures of docs/global_report/three_regimes.tex from the data written by
-`make doc global_report compute` (kicked_top_regimes with
-docs/global_report/figures/configs_regimes/three_regimes.nml)."""
+`make doc global_report compute` (kicked_top_regimes with three_regimes.nml and
+three_regimes_butterfly.nml in docs/global_report/figures/configs_regimes/)."""
 
 from pathlib import Path
 
@@ -12,19 +12,20 @@ import numpy as np
 
 FIG_DIR = Path(__file__).resolve().parent
 DATA_DIR = FIG_DIR / "data" / "three_regimes"
+BUTTERFLY_DIR = FIG_DIR / "data" / "three_regimes_butterfly"
 K_CHIRIKOV = 0.9716
 
 plt.rcParams.update({"font.size": 10, "axes.labelsize": 11, "savefig.bbox": "tight"})
 
 
-def load(i, name):
+def load(i, name, data=DATA_DIR):
     """Numeric data of output file name of run i (1-based)."""
-    return np.loadtxt(DATA_DIR / f"p_{i}" / name, ndmin=2)
+    return np.loadtxt(data / f"p_{i}" / name, ndmin=2)
 
 
-def runs():
+def runs(data=DATA_DIR):
     """(i, p, k, n_q) of every run."""
-    return [(int(r[0]), r[1], r[2], int(r[3])) for r in np.loadtxt(DATA_DIR / "regimes.dat", ndmin=2)]
+    return [(int(r[0]), r[1], r[2], int(r[3])) for r in np.loadtxt(data / "regimes.dat", ndmin=2)]
 
 
 def phase_axes(ax):
@@ -53,16 +54,16 @@ def sections():
     fig.savefig(FIG_DIR / "three_regimes_sections.pdf", dpi=200)
 
 
-def husimi():
-    """Fig. [fig:husimi]: Husimi distribution of the chain at t = 0, t_r, 2 t_r."""
-    rs = runs()
-    d0 = load(1, "chain/husimi.dat")
+def husimi(data=DATA_DIR, name="three_regimes_husimi.pdf"):
+    """Figs. [fig:husimi], [fig:butterfly-husimi]: Husimi distribution of the chain at t = 0, t_r, 2 t_r."""
+    rs = runs(data)
+    d0 = load(1, "chain/husimi.dat", data)
     steps = np.unique(d0[:, 0]).astype(int)
     n_phi = len(np.unique(d0[d0[:, 0] == steps[0], 1]))
     fig, axes = plt.subplots(len(rs), len(steps), figsize=(3.6 * len(steps), 3.0 * len(rs)),
                              sharex=True, sharey=True)
     for row, (i, p, _, _) in zip(axes, rs):
-        d = load(i, "chain/husimi.dat")
+        d = load(i, "chain/husimi.dat", data)
         for ax, t in zip(row, steps):
             b = d[d[:, 0] == t]
             shape = (-1, n_phi)
@@ -72,7 +73,7 @@ def husimi():
             ax.set_title(rf"$p = {p:g}$, $t = {t}$")
             ax.label_outer()
         row[0].set_ylabel(r"$Z=\cos\theta$")
-    fig.savefig(FIG_DIR / "three_regimes_husimi.pdf", dpi=200)
+    fig.savefig(FIG_DIR / name, dpi=200)
 
 
 def echo():
@@ -95,7 +96,25 @@ def echo():
     fig.savefig(FIG_DIR / "three_regimes_echo.pdf")
 
 
+def butterfly_fidelity():
+    """Fig. [fig:butterfly-fidelity]: fidelity F(t) with qubit i_flip flipped at t_r."""
+    fig, ax = plt.subplots(figsize=(7, 3))
+    for i, p, _, n_q in runs(BUTTERFLY_DIR):
+        f = load(i, "chain/fidelity.dat", BUTTERFLY_DIR)
+        ax.plot(f[:, 0], f[:, 1], "o-", ms=2.5, lw=1, label=rf"$p = {p:g}$")
+    t_r = (len(f) - 1) // 2  # t = 0 .. 2 t_r
+    ax.axvline(t_r, color="0.5", ls="--", lw=0.8)
+    ax.axhline(1 / (n_q + 1), color="0.5", ls=":", lw=0.8)
+    ax.set_ylim(-0.02, 1.02)
+    ax.set_ylabel(r"$F(t)$")
+    ax.set_xlabel(r"$t$")
+    ax.legend(loc="center right", fontsize=8)
+    fig.savefig(FIG_DIR / "three_regimes_butterfly_fidelity.pdf")
+
+
 if __name__ == "__main__":
     sections()
     husimi()
     echo()
+    husimi(BUTTERFLY_DIR, "three_regimes_butterfly_husimi.pdf")
+    butterfly_fidelity()

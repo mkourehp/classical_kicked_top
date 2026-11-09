@@ -79,7 +79,7 @@ ASCII, one block per initial condition separated by a blank line; first line is 
 
 - `trajectory.dat`: `ic n X Y Z`
 - `phase_space.dat`: `ic n phi Z`, with $\phi \in (-\pi, \pi]$
-- `energy.dat`: `pY  k/2*Z^2  total`, row-aligned with the two files above
+- `energy.dat` (modes `single` and `grid`): `pY  k/2*Z^2  total`, row-aligned with the two files above
 - `lyapunov.dat` (if `&lyapunov` is enabled): `ic phi0 Z0 Lambda`, one line per initial condition
 
 ## Quantum kicked top

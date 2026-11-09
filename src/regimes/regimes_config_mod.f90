@@ -23,6 +23,7 @@ module regimes_config_mod
     integer :: t_r                 ! chain: forward steps before the reversal
     logical :: butterfly_effect    ! chain: flip qubit i_flip at t_r, before the backward leg
     integer :: i_flip              ! chain: index (1 .. n_q) of the flipped qubit
+    character(len=1) :: flip_axis  ! chain: the flip is sigma^a on qubit i_flip, a = 'x', 'y', 'z'
     integer :: hus_n_theta         ! Husimi grid points in Z
     integer :: hus_n_phi           ! Husimi grid points in phi
     character(len=str_len) :: out_dir   ! output directory
@@ -37,14 +38,14 @@ contains
     integer :: n_q, s0, n_kicks, n_theta, n_phi, t_r, i_flip
     logical :: butterfly_effect
     real(wp) :: k, p(max_p)
-    character(len=1) :: pol
+    character(len=1) :: pol, flip_axis
     character(len=str_len) :: out_dir
     integer :: u, ios
 
     namelist /system/ n_q, k, p
     namelist /initial/ s0, pol
     namelist /classical/ n_kicks, n_theta, n_phi
-    namelist /chain/ t_r, butterfly_effect, i_flip
+    namelist /chain/ t_r, butterfly_effect, i_flip, flip_axis
     namelist /husimi/ n_theta, n_phi
     namelist /output/ out_dir
 
@@ -57,6 +58,7 @@ contains
     t_r = 30
     butterfly_effect = .false.
     i_flip = 1
+    flip_axis = 'x'
     out_dir = 'output_regimes'
 
     open(newunit=u, file=path, status='old', action='read', iostat=ios)
@@ -99,6 +101,7 @@ contains
     cfg%t_r = t_r
     cfg%butterfly_effect = butterfly_effect
     cfg%i_flip = i_flip
+    cfg%flip_axis = flip_axis
     cfg%out_dir = out_dir
 
     call validate(cfg)
@@ -113,6 +116,7 @@ contains
     if (cfg%n_theta < 1 .or. cfg%n_phi < 1) error stop 'regimes_config_mod: n_theta and n_phi must be >= 1'
     if (cfg%t_r < 1) error stop 'regimes_config_mod: t_r must be >= 1'
     if (cfg%i_flip < 1 .or. cfg%i_flip > cfg%n_q) error stop 'regimes_config_mod: i_flip must be in 1 .. n_q'
+    if (index('xyz', cfg%flip_axis) == 0) error stop "regimes_config_mod: flip_axis must be 'x', 'y' or 'z'"
     if (cfg%hus_n_theta < 1 .or. cfg%hus_n_phi < 1) error stop 'regimes_config_mod: Husimi grid must be >= 1'
   end subroutine validate
 

@@ -318,9 +318,10 @@ $n_q=1,\dots,14$, several $p$ and $k$, and coherent initial states.
 
 \paragraph{Butterfly effect.}
 With \texttt{butterfly\_effect = .true.} one qubit, $i=$ \texttt{i\_flip}, is flipped at $t_r$, between the forward
-and the backward leg. The flip is a $\pi$ rotation about an axis perpendicular to the initial polarisation, so that a
-qubit still in its initial state goes from $+s$ to $-s$: $X_i=\sigma^x_i$ for polarisation along $z$ or $y$, and
-$X_i=\sigma^z_i$ for polarisation along $x$. The backward leg then gives
+and the backward leg. The flip is $X_i=\sigma^a_i$, with $a=$ \texttt{flip\_axis} $\in\{x,y,z\}$: a $\pi$ rotation of
+qubit $i$ about $a$ (up to a global phase), which reverses the components of the qubit perpendicular to $a$. For the
+initial state polarised along $z$ and $a=x$ (used below), a qubit still in its initial state goes from $+s$ to $-s$.
+The backward leg then gives
 \begin{equation}
   \psi(t_r+s) = U_b^{\,s}X_iU_{\rm chain}^{\,t_r}\psi_0 = \gamma^s\,U_{\rm chain}^{-s}X_iU_{\rm chain}^{\,t_r}\psi_0
   \quad(1\le s\le t_r),
@@ -333,8 +334,7 @@ and at the end
 since $X_i$ is Hermitian and unitary. The echo thus measures how far qubit $i$ has turned away from the polarisation
 axis at $t_r$. If the state has barely moved, $\langle X_i\rangle_{t_r}\approx0$ and the flipped qubit stays orthogonal
 to its initial state, $F(2t_r)\approx0$. Numerically $F(2t_r)$ equals $\langle X_i\rangle_{t_r}^2$ to $10^{-15}$. The
-flip breaks the permutation symmetry, so the state leaves the symmetric subspace on the backward leg. The figures below
-are without the flip.
+flip breaks the permutation symmetry, so the state leaves the symmetric subspace on the backward leg.
 
 \paragraph{Measures.}
 The fidelity
@@ -388,5 +388,40 @@ entanglement created by the coupling. The total spin $\langle\bm J^2\rangle = j(
 \end{description}
 In all three regimes the backward leg mirrors the forward one, and $F(2t_r)=1$ and $Q(2t_r)=Q(0)$ hold to
 $10^{-13}$ (\cref{fig:echo,fig:husimi}).
+
+\subsection{Butterfly effect}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.8\textwidth]{figures/three_regimes_butterfly_fidelity.pdf}
+  \caption{Fidelity $F(t)$ as in \cref{fig:echo}, with qubit $i=1$ flipped by $\sigma^x_1$ at $t_r=30$ (dashed).
+  Dotted: $1/(2j+1)$.}
+  \label{fig:butterfly-fidelity}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\textwidth]{figures/three_regimes_butterfly_husimi.pdf}
+  \caption{Husimi distribution \cref{eq:Q} at $t=0$, $t_r$ and $2t_r$ with the flip of \cref{fig:butterfly-fidelity}.
+  It is computed from the projection of the state onto the symmetric subspace, so at $2t_r$ it carries only the weight
+  $\frac{2j+1}{4\pi}\int d\phi\,dZ\,Q = 0.10$, $0.14$ and $0.50$ for $p=0.02$, $0.1$ and $1$. Each panel has its own colour
+  scale.}
+  \label{fig:butterfly-husimi}
+\end{figure}
+
+\Cref{fig:butterfly-fidelity,fig:butterfly-husimi} repeat the runs of \cref{fig:echo,fig:husimi} with the flip
+$X_1=\sigma^x_1$ at $t_r$. The forward leg is unchanged. The flip lowers the fidelity at once, to $F(t_r+1)=1.4\times
+10^{-4}$, $4.2\times10^{-3}$ and $0.029$, and the echo does not recover: $F(2t_r)=\langle\sigma^x_1\rangle_{t_r}^2=7.3
+\times10^{-5}$, $2.5\times10^{-3}$ and $0.093$.
+\begin{description}
+\item[Regular, $p=0.02$:] At $t_r$ the state is still close to $\psi_0$, so the backward leg brings it back to $\psi_0$
+  with qubit 1 flipped, $\sigma^x_1\psi_0$, which is orthogonal to $\psi_0$. Its symmetric part is the Dicke state
+  $|j,j-1\rangle$ with weight $1/n_q=0.1$, the ring near the pole in \cref{fig:butterfly-husimi}.
+\item[Mixed, $p=0.1$:] As in the regular case, $F(2t_r)$ is small, and the symmetric part ($0.14$) lies in the polar
+  cap.
+\item[Chaotic, $p=1$:] At $t_r$ qubit 1 is strongly entangled and its Bloch vector is short, so the flip changes the
+  state less: $F(2t_r)=0.093$, close to $1/(2j+1)$, and half of the state stays in the symmetric subspace. Its Husimi
+  distribution at $2t_r$ is spread over the sphere instead of returning to the pole.
+\end{description}
 
 \end{document}

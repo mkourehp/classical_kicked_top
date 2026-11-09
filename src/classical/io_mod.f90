@@ -21,26 +21,28 @@ contains
   ! the energy terms are eq. (23) [eq:energy].
   !   trajectory.dat  : ic  n  X  Y  Z
   !   phase_space.dat : ic  n  phi  Z      (phi in (-pi, pi])
-  !   energy.dat      : pY  k/2*Z**2  total (same rows as the files above; only for mode='single')
+  !   energy.dat      : pY  k/2*Z**2  total (same rows as the files above; only for mode='single' or 'grid')
   subroutine write_results(cfg, orbit)
     type(config_t), intent(in) :: cfg
     real(wp), intent(in) :: orbit(:,:,:)
     character(len=:), allocatable :: title
     integer :: u_traj, u_ps, u_en, ic, isave, n
+    logical :: with_energy
 
     call make_dir(cfg%out_dir)
     title = header(cfg)
+    with_energy = cfg%mode == 'single' .or. cfg%mode == 'grid'
 
     open(newunit=u_traj, file=trim(cfg%out_dir)//'/'//trajectory_file, status='replace', action='write')
     open(newunit=u_ps, file=trim(cfg%out_dir)//'/'//phase_space_file, status='replace', action='write')
-    if (cfg%mode == 'single') &
+    if (with_energy) &
       open(newunit=u_en, file=trim(cfg%out_dir)//'/'//energy_file, status='replace', action='write')
 
     write(u_traj, '(a)') '# '//title
     write(u_traj, '(a)') '# ic n X Y Z'
     write(u_ps, '(a)') '# '//title
     write(u_ps, '(a)') '# ic n phi Z'
-    if (cfg%mode == 'single') then
+    if (with_energy) then
       write(u_en, '(a)') '# '//title
       write(u_en, '(a)') '# pY k/2*Z^2 total'
     end if
@@ -51,16 +53,16 @@ contains
         write(u_traj, '(i0,1x,i0,3(1x,es23.15e3))') ic, n, orbit(:, isave, ic)
         write(u_ps, '(i0,1x,i0,2(1x,es23.15e3))') ic, n, &
           atan2(orbit(2, isave, ic), orbit(1, isave, ic)), orbit(3, isave, ic)
-        if (cfg%mode == 'single') write(u_en, '(3(es23.15e3,1x))') energy(orbit(:, isave, ic), cfg%p, cfg%k)
+        if (with_energy) write(u_en, '(3(es23.15e3,1x))') energy(orbit(:, isave, ic), cfg%p, cfg%k)
       end do
       write(u_traj, '(a)') ''
       write(u_ps, '(a)') ''
-      if (cfg%mode == 'single') write(u_en, '(a)') ''
+      if (with_energy) write(u_en, '(a)') ''
     end do
 
     close(u_traj)
     close(u_ps)
-    if (cfg%mode == 'single') close(u_en)
+    if (with_energy) close(u_en)
   end subroutine write_results
 
   ! Writes lyapunov.dat to cfg%out_dir, one line per initial condition

@@ -92,27 +92,34 @@ contains
     end do
   end subroutine rotate_y
 
-  ! Spin flip of qubit i (1 .. n_q) by a pi rotation perpendicular to the
-  ! polarisation axis pol, so that a qubit polarised along pol goes from +s to -s:
-  ! sigma^x_i for pol = 'z' or 'y', sigma^z_i for pol = 'x' (up to a global phase).
-  subroutine flip_qubit(psi, i, pol)
+  ! Spin flip of qubit i (1 .. n_q): psi -> sigma^a_i psi, a = axis ('x', 'y' or 'z'),
+  ! a pi rotation of qubit i about a (up to a global phase). It reverses the
+  ! components of the qubit perpendicular to a. In the basis (up, down):
+  ! sigma^x = [[0, 1], [1, 0]], sigma^y = [[0, -i], [i, 0]], sigma^z = [[1, 0], [0, -1]].
+  subroutine flip_qubit(psi, i, axis)
     complex(wp), intent(inout) :: psi(0:)
     integer, intent(in) :: i
-    character(len=1), intent(in) :: pol
-    complex(wp) :: a
+    character(len=1), intent(in) :: axis
+    complex(wp), parameter :: im = (0.0_wp, 1.0_wp)
+    complex(wp) :: a_up, a_dn
     integer :: b, mask
 
     mask = ishft(1, i - 1)
-    !$omp parallel do private(a) schedule(static)
+    !$omp parallel do private(a_up, a_dn) schedule(static)
     do b = 0, size(psi) - 1
       if (iand(b, mask) /= 0) cycle
-      if (pol == 'x') then
-        psi(b) = -psi(b)
-      else
-        a = psi(b)
-        psi(b) = psi(ior(b, mask))
-        psi(ior(b, mask)) = a
-      end if
+      a_dn = psi(b)
+      a_up = psi(ior(b, mask))
+      select case (axis)
+      case ('x')
+        psi(ior(b, mask)) = a_dn
+        psi(b) = a_up
+      case ('y')
+        psi(ior(b, mask)) = -im*a_dn
+        psi(b) = im*a_up
+      case default
+        psi(b) = -a_dn
+      end select
     end do
     !$omp end parallel do
   end subroutine flip_qubit

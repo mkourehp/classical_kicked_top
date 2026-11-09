@@ -7,7 +7,7 @@
 !       snapshots (S2);
 !   S4  time reversal of the chain: t_r forward steps U, then t_r backward
 !       steps U^dagger (coupling 2 pi - k/(2j), kick -p); with butterfly_effect
-!       the qubit i_flip is flipped at t_r, before the backward leg.
+!       sigma^a (a = flip_axis) acts on qubit i_flip at t_r, before the backward leg.
 ! Usage: kicked_top_regimes [namelist file]   (default config_regimes.nml)
 program kicked_top_regimes
   use kinds_mod, only: wp
@@ -104,7 +104,7 @@ contains
 
     do t = 0, 2*cfg%t_r
       if (t >= 1 .and. t <= cfg%t_r) call forward_step(psi, cfg%n_q, p, cfg%k, e_zz)
-      if (t == cfg%t_r + 1 .and. cfg%butterfly_effect) call flip_qubit(psi, cfg%i_flip, cfg%pol)
+      if (t == cfg%t_r + 1 .and. cfg%butterfly_effect) call flip_qubit(psi, cfg%i_flip, cfg%flip_axis)
       if (t > cfg%t_r) call backward_step(psi, cfg%n_q, p, cfg%k, e_zz)
 
       sig = site_spins(psi, cfg%n_q)
