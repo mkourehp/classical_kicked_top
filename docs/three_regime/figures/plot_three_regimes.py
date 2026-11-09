@@ -1,6 +1,6 @@
-"""Plots the figures of docs/global_report/three_regimes.tex from the data written by
-`make doc global_report compute` (kicked_top_regimes with three_regimes.nml and
-three_regimes_butterfly.nml in docs/global_report/figures/configs_regimes/)."""
+"""Plots the figures of docs/three_regime/three_regimes.tex from the data written by
+`make doc three_regime compute` (kicked_top_regimes with three_regimes.nml and
+three_regimes_butterfly.nml in docs/three_regime/figures/configs_regimes/)."""
 
 from pathlib import Path
 

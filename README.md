@@ -41,7 +41,7 @@ scripts/quantum_post_processor.py  quantum plots
 
 New features go in their own module with their own namelist group, called from `main.f90`.
 
-The physics and the code are explained in the lecture notes `docs/global_report/kicked_top_notes.pdf` (`make doc global_report` rebuilds them, `make doc global_report compute` first recomputes their figures). Code comments cite the equations they implement by number and LaTeX label, e.g. `eq. (20) [eq:map]`.
+The physics and the code are explained in the lecture notes `docs/kicked_top_notes/kicked_top_notes.pdf` (`make doc kicked_top_notes` rebuilds them, `make doc kicked_top_notes compute` first recomputes their figures). Code comments cite the equations they implement by number and LaTeX label, e.g. `eq. (20) [eq:map]`.
 
 ## Usage
 

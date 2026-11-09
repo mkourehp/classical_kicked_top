@@ -13,7 +13,7 @@
   n_phi = 80
 /
 &output
-  out_dir = 'docs/global_report/figures/data/lyapunov_k3.0'
+  out_dir = 'docs/kicked_top_notes/figures/data/lyapunov_k3.0'
 /
 &lyapunov
   enabled = .true.

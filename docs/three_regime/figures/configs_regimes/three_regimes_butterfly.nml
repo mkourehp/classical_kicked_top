@@ -1,4 +1,4 @@
-! Figures of docs/global_report/three_regimes.tex (same parameters as config_regimes.nml).
+! Butterfly-effect figures of docs/three_regime/three_regimes.tex (qubit i_flip flipped at t_r).
 ! The chain has n_q qubits, J = (1/2) sum_i sigma_i, j = n_q/2:
 ! H = k/(2j) sum_{i,l} V_il sigma^z_i sigma^z_l + p J_y sum_n delta(t-n), V_il = 1/4 (H_zz = J_z^2),
 ! U = exp(-i k/(2j) H_zz) exp(-i p J_y).
@@ -22,7 +22,7 @@
 
 &chain
   t_r = 30                 ! forward steps before the time reversal (then t_r backward steps)
-  butterfly_effect = .false. ! flip qubit i_flip at t_r, before the backward leg
+  butterfly_effect = .true.  ! flip qubit i_flip at t_r, before the backward leg
   i_flip = 1               ! index (1 .. n_q) of the flipped qubit
   flip_axis = 'x'          ! the flip is sigma^a on qubit i_flip, a = 'x', 'y' or 'z'
 /
@@ -33,5 +33,5 @@
 /
 
 &output
-  out_dir = 'docs/global_report/figures/data/three_regimes'
+  out_dir = 'docs/three_regime/figures/data/three_regimes_butterfly'
 /

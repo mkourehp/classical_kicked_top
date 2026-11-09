@@ -1,6 +1,6 @@
 &system
   p = 1.5707963267948966
-  k = 3.0
+  k = 4.5
 /
 &simulation
   n_kicks = 500
@@ -15,5 +15,5 @@
   n_phi = 20
 /
 &output
-  out_dir = 'docs/global_report/figures/data/portrait_k3.0'
+  out_dir = 'docs/kicked_top_notes/figures/data/portrait_k4.5'
 /

@@ -9,11 +9,11 @@
 /
 &initial
   mode = 'single'
-  theta0 = 1.5707963367948966
-  phi0 = 1.4
+  theta0 = 2.2142974355881813
+  phi0 = 0.6
   n_theta = 1
   n_phi = 1
 /
 &output
-  out_dir = 'docs/global_report/figures/data/single_chaotic_shifted'
+  out_dir = 'docs/kicked_top_notes/figures/data/single_regular'
 /
