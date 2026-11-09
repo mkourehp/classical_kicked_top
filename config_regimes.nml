@@ -21,7 +21,9 @@
 /
 
 &chain
-  t_r = 30                 ! forward steps before the time reversal (then t_r + 2 backward steps)
+  t_r = 30                 ! forward steps before the time reversal (then t_r backward steps)
+  butterfly_effect = .true. ! flip qubit i_flip at t_r, before the backward leg
+  i_flip = 1               ! index (1 .. n_q) of the flipped qubit
 /
 
 &husimi

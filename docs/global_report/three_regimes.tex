@@ -304,20 +304,37 @@ integers.
 
 \paragraph{Protocol.}
 Starting from $\psi_0=|{\uparrow\cdots\uparrow}\rangle$, apply $U_{\rm chain}$ for $t_r$ periods and then $U_b$ for
-$t_r+2$ periods:
+$t_r$ periods:
 \begin{equation}
   \psi(t) = U_{\rm chain}^{\,t}\psi_0\quad (0\le t\le t_r),\qquad
   \psi(t_r+s) = U_b^{\,s}U_{\rm chain}^{\,t_r}\psi_0 = \gamma^s\,U_{\rm chain}^{\,t_r-s}\psi_0
-  \quad(0\le s\le t_r+2).
+  \quad(0\le s\le t_r).
 \end{equation}
-Three consequences follow. The state returns, $\psi(2t_r)=\gamma^{t_r}\psi_0$, so $F(2t_r)=1$. Every quantity is
-mirror-symmetric about $t_r$: its value at $t_r+s$ equals its value at $t_r-s$, since $\psi(t_r+s)=\gamma^s\psi(t_r-s)$
-for $s\le t_r$. And the last two steps continue past the initial state, $\psi(2t_r+s')=\gamma^{t_r+s'}U_{\rm
-chain}^{-s'}\psi_0$ for $s'=1,2$, so that
-$F(2t_r+s')=|\langle\psi_0|U_{\rm chain}^{-s'}\psi_0\rangle|^2=|\langle\psi_0|U_{\rm chain}^{\,s'}\psi_0\rangle|^2=F(s')$.
+Two consequences follow. The state returns, $\psi(2t_r)=\gamma^{t_r}\psi_0$, so $F(2t_r)=1$. And every quantity is
+mirror-symmetric about $t_r$: its value at $t_r+s$ equals its value at $t_r-s$, since $\psi(t_r+s)=\gamma^s\psi(t_r-s)$.
 Without imperfections the echo is perfect in all three regimes, so the regimes differ only in what happens between
 $0$ and $2t_r$. Here $t_r=30$. Numerically, $U_b=\gamma U_{\rm chain}^\dagger$ holds to $4\times10^{-14}$ per step for
 $n_q=1,\dots,14$, several $p$ and $k$, and coherent initial states.
+
+\paragraph{Butterfly effect.}
+With \texttt{butterfly\_effect = .true.} one qubit, $i=$ \texttt{i\_flip}, is flipped at $t_r$, between the forward
+and the backward leg. The flip is a $\pi$ rotation about an axis perpendicular to the initial polarisation, so that a
+qubit still in its initial state goes from $+s$ to $-s$: $X_i=\sigma^x_i$ for polarisation along $z$ or $y$, and
+$X_i=\sigma^z_i$ for polarisation along $x$. The backward leg then gives
+\begin{equation}
+  \psi(t_r+s) = U_b^{\,s}X_iU_{\rm chain}^{\,t_r}\psi_0 = \gamma^s\,U_{\rm chain}^{-s}X_iU_{\rm chain}^{\,t_r}\psi_0
+  \quad(1\le s\le t_r),
+\end{equation}
+and at the end
+\begin{equation}
+  F(2t_r) = |\langle\psi_0|U_{\rm chain}^{-t_r}X_iU_{\rm chain}^{\,t_r}|\psi_0\rangle|^2
+  = |\langle\psi(t_r)|X_i|\psi(t_r)\rangle|^2 = \langle X_i\rangle_{t_r}^2 ,
+\end{equation}
+since $X_i$ is Hermitian and unitary. The echo thus measures how far qubit $i$ has turned away from the polarisation
+axis at $t_r$. If the state has barely moved, $\langle X_i\rangle_{t_r}\approx0$ and the flipped qubit stays orthogonal
+to its initial state, $F(2t_r)\approx0$. Numerically $F(2t_r)$ equals $\langle X_i\rangle_{t_r}^2$ to $10^{-15}$. The
+flip breaks the permutation symmetry, so the state leaves the symmetric subspace on the backward leg. The figures below
+are without the flip.
 
 \paragraph{Measures.}
 The fidelity
@@ -343,7 +360,7 @@ entanglement created by the coupling. The total spin $\langle\bm J^2\rangle = j(
   \centering
   \includegraphics[width=0.8\textwidth]{figures/three_regimes_echo.pdf}
   \caption{Fidelity $F(t)$ (top) and single-qubit Bloch-vector length $r(t)$ (bottom) for $n_q=10$, $k=20$,
-  reversal at $t_r=30$ (dashed), followed by $t_r+2$ backward periods. Dotted: $1/(2j+1)$.}
+  reversal at $t_r=30$ (dashed), followed by $t_r$ backward periods. Dotted: $1/(2j+1)$.}
   \label{fig:echo}
 \end{figure}
 
@@ -370,6 +387,6 @@ entanglement created by the coupling. The total spin $\langle\bm J^2\rangle = j(
   about 2 for a coherent state.)
 \end{description}
 In all three regimes the backward leg mirrors the forward one, and $F(2t_r)=1$ and $Q(2t_r)=Q(0)$ hold to
-$10^{-13}$ (\cref{fig:echo,fig:husimi}). The two extra backward periods reproduce $F(1)$ and $F(2)$.
+$10^{-13}$ (\cref{fig:echo,fig:husimi}).
 
 \end{document}

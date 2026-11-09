@@ -5,9 +5,9 @@
 !   S3  the qubit chain, n_q spins 1/2 with all-to-all zz couplings V_il = 1/4,
 !       evolved by its Floquet step on the state vector only, with Husimi
 !       snapshots (S2);
-!   S4  time reversal of the chain: t_r forward steps U, then t_r + 2 backward
-!       steps U^dagger (coupling 2 pi - k/(2j), kick -p); the last two steps
-!       continue past the initial state.
+!   S4  time reversal of the chain: t_r forward steps U, then t_r backward
+!       steps U^dagger (coupling 2 pi - k/(2j), kick -p); with butterfly_effect
+!       the qubit i_flip is flipped at t_r, before the backward leg.
 ! Usage: kicked_top_regimes [namelist file]   (default config_regimes.nml)
 program kicked_top_regimes
   use kinds_mod, only: wp
@@ -21,7 +21,7 @@ program kicked_top_regimes
   use regimes_config_mod, only: rconfig_t, read_regimes_config, str_len
   use regimes_io_mod, only: run_dir, write_regimes, write_chain, write_husimi, write_summary
   use chain_state_mod, only: ferromagnetic_direction, product_coherent_state, dicke_amplitudes
-  use chain_floquet_mod, only: uniform_coupling, zz_energies, forward_step, backward_step
+  use chain_floquet_mod, only: uniform_coupling, zz_energies, flip_qubit, forward_step, backward_step
   use chain_observables_mod, only: fidelity, site_spins, total_spin
   implicit none
 
@@ -85,7 +85,8 @@ contains
     call write_results(c, orbit)
   end subroutine run_classical
 
-  ! S3/S4: forward evolution for t_r steps, then backward evolution for t_r + 2 steps.
+  ! S3/S4: forward evolution for t_r steps, then (after the optional flip) backward evolution for t_r steps.
+  ! obs(:, t_r) and the Husimi snapshot at t_r are taken before the flip.
   subroutine run_chain(p, dir)
     real(wp), intent(in) :: p
     character(len=*), intent(in) :: dir
@@ -96,13 +97,14 @@ contains
 
     j = 0.5_wp*cfg%n_q
     steps = [0, cfg%t_r, 2*cfg%t_r]
-    allocate(obs(9 + 3*cfg%n_q, 0:2*cfg%t_r + 2), q(size(hus_theta), size(steps)))
+    allocate(obs(9 + 3*cfg%n_q, 0:2*cfg%t_r), q(size(hus_theta), size(steps)))
     psi0 = product_coherent_state(cfg%n_q, theta0, phi0)
     psi = psi0
     sym_dev = 0.0_wp
 
-    do t = 0, 2*cfg%t_r + 2
+    do t = 0, 2*cfg%t_r
       if (t >= 1 .and. t <= cfg%t_r) call forward_step(psi, cfg%n_q, p, cfg%k, e_zz)
+      if (t == cfg%t_r + 1 .and. cfg%butterfly_effect) call flip_qubit(psi, cfg%i_flip, cfg%pol)
       if (t > cfg%t_r) call backward_step(psi, cfg%n_q, p, cfg%k, e_zz)
 
       sig = site_spins(psi, cfg%n_q)

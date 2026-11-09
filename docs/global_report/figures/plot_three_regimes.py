@@ -83,7 +83,7 @@ def echo():
         s = load(i, "chain/total_spin.dat")
         ax_f.plot(f[:, 0], f[:, 1], "o-", ms=2.5, lw=1, label=rf"$p = {p:g}$")
         ax_r.plot(s[:, 0], np.linalg.norm(s[:, 1:4], axis=1) / (n_q / 2), "o-", ms=2.5, lw=1)
-    t_r = (len(f) - 3) // 2  # t = 0 .. 2 t_r + 2
+    t_r = (len(f) - 1) // 2  # t = 0 .. 2 t_r
     for ax in (ax_f, ax_r):
         ax.axvline(t_r, color="0.5", ls="--", lw=0.8)
         ax.set_ylim(-0.02, 1.02)

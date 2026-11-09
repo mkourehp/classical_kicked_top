@@ -18,7 +18,7 @@ module chain_floquet_mod
   use kinds_mod, only: wp, two_pi
   implicit none
   private
-  public :: uniform_coupling, zz_energies, zz_coupling, rotate_y, forward_step, backward_step
+  public :: uniform_coupling, zz_energies, zz_coupling, rotate_y, flip_qubit, forward_step, backward_step
 
 contains
 
@@ -91,6 +91,31 @@ contains
       !$omp end parallel do
     end do
   end subroutine rotate_y
+
+  ! Spin flip of qubit i (1 .. n_q) by a pi rotation perpendicular to the
+  ! polarisation axis pol, so that a qubit polarised along pol goes from +s to -s:
+  ! sigma^x_i for pol = 'z' or 'y', sigma^z_i for pol = 'x' (up to a global phase).
+  subroutine flip_qubit(psi, i, pol)
+    complex(wp), intent(inout) :: psi(0:)
+    integer, intent(in) :: i
+    character(len=1), intent(in) :: pol
+    complex(wp) :: a
+    integer :: b, mask
+
+    mask = ishft(1, i - 1)
+    !$omp parallel do private(a) schedule(static)
+    do b = 0, size(psi) - 1
+      if (iand(b, mask) /= 0) cycle
+      if (pol == 'x') then
+        psi(b) = -psi(b)
+      else
+        a = psi(b)
+        psi(b) = psi(ior(b, mask))
+        psi(ior(b, mask)) = a
+      end if
+    end do
+    !$omp end parallel do
+  end subroutine flip_qubit
 
   ! One period: U = exp(-i (k/(2j)) H_zz) exp(-i p J_y), j = n_q/2
   ! (first the kick, then the couplings for one period).
