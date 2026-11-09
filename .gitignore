@@ -225,8 +225,8 @@ build/
 output/
 output_regimes/
 
-# Lecture notes
-docs/figures/data/
+# Reports
+docs/*/figures/data/
 *.aux
 *.fdb_latexmk
 *.fls

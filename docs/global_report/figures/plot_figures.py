@@ -1,4 +1,4 @@
-"""Plots the figures of the lecture notes from the data written by `make figures`."""
+"""Plots the figures of the lecture notes from the data written by `make doc global_report compute`."""
 
 from pathlib import Path
 

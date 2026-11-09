@@ -1,5 +1,6 @@
-"""Plots the figures of docs/three_regimes.tex from the data written by `make figures`
-(kicked_top_regimes with docs/figures/configs_regimes/three_regimes.nml)."""
+"""Plots the figures of docs/global_report/three_regimes.tex from the data written by
+`make doc global_report compute` (kicked_top_regimes with
+docs/global_report/figures/configs_regimes/three_regimes.nml)."""
 
 from pathlib import Path
 

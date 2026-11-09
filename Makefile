@@ -23,7 +23,7 @@ EXE  = $(BUILD)/kicked_top
 QEXE = $(BUILD)/kicked_top_quantum
 REXE = $(BUILD)/kicked_top_regimes
 
-.PHONY: all classical quantum regimes run-classical run-quantum run-regimes clean figures docs
+.PHONY: all classical quantum regimes run-classical run-quantum run-regimes clean doc
 
 all: classical quantum regimes
 
@@ -87,22 +87,31 @@ run-quantum: $(QEXE)
 run-regimes: $(REXE)
 	./$(REXE) config_regimes.nml
 
-# lecture notes
-DOCS        = docs
-FIG_CONFIGS  = $(wildcard $(DOCS)/figures/configs/*.nml)
-QFIG_CONFIGS = $(wildcard $(DOCS)/figures/configs_quantum/*.nml)
-RFIG_CONFIGS = $(wildcard $(DOCS)/figures/configs_regimes/*.nml)
+# reports: make doc <dir> [compute], <dir> a directory in docs/.
+# Without compute, compiles every .tex in docs/<dir>, assuming its figures exist.
+# With compute, first runs every namelist in docs/<dir>/figures/configs{,_quantum,_regimes}/
+# with kicked_top, kicked_top_quantum and kicked_top_regimes, then every docs/<dir>/figures/plot_*.py.
+DOCS = docs
+ifeq (doc,$(firstword $(MAKECMDGOALS)))
+  REPORT  := $(word 2,$(MAKECMDGOALS))
+  COMPUTE := $(filter compute,$(wordlist 3,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS)))
+  ifneq ($(REPORT),)
+    $(eval $(REPORT) compute: ; @:)
+  endif
+endif
+REPORT_DIR = $(DOCS)/$(REPORT)
+REPORT_FIG = $(REPORT_DIR)/figures
 
-figures: $(EXE) $(QEXE) $(REXE)
-	for f in $(FIG_CONFIGS); do ./$(EXE) $$f || exit 1; done
-	for f in $(QFIG_CONFIGS); do ./$(QEXE) $$f || exit 1; done
-	for f in $(RFIG_CONFIGS); do ./$(REXE) $$f || exit 1; done
-	python3 $(DOCS)/figures/plot_figures.py
-	python3 $(DOCS)/figures/plot_three_regimes.py
-
-docs:
-	cd $(DOCS) && latexmk -pdf -interaction=nonstopmode -halt-on-error kicked_top_notes.tex three_regimes.tex
+doc: $(if $(COMPUTE),$(EXE) $(QEXE) $(REXE))
+	@test -n "$(REPORT)" && test -d "$(REPORT_DIR)" || { echo "usage: make doc <dir> [compute], <dir> a directory in $(DOCS)/"; exit 1; }
+ifneq ($(COMPUTE),)
+	for f in $(wildcard $(REPORT_FIG)/configs/*.nml); do ./$(EXE) $$f || exit 1; done
+	for f in $(wildcard $(REPORT_FIG)/configs_quantum/*.nml); do ./$(QEXE) $$f || exit 1; done
+	for f in $(wildcard $(REPORT_FIG)/configs_regimes/*.nml); do ./$(REXE) $$f || exit 1; done
+	for f in $(wildcard $(REPORT_FIG)/plot_*.py); do python3 $$f || exit 1; done
+endif
+	cd $(REPORT_DIR) && latexmk -pdf -interaction=nonstopmode -halt-on-error $(notdir $(wildcard $(REPORT_DIR)/*.tex))
 
 clean:
 	rm -rf $(BUILD)
-	cd $(DOCS) && latexmk -c kicked_top_notes.tex three_regimes.tex
+	for d in $(wildcard $(DOCS)/*/); do (cd $$d && latexmk -c) || exit 1; done

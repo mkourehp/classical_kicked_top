@@ -15,5 +15,5 @@
   n_phi = 20
 /
 &output
-  out_dir = 'docs/figures/data/portrait_k3.0'
+  out_dir = 'docs/global_report/figures/data/portrait_k3.0'
 /

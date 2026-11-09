@@ -1352,12 +1352,13 @@ make                                   # build/kicked_top
 python scripts/post_processor.py       # output/phase_space.png
 python scripts/post_processor.py --sphere --show
 python scripts/post_processor.py --lyapunov    # output/lyapunov.png
-make figures                           # recompute the figures of these notes
-make docs                              # compile docs/kicked_top_notes.tex
+make doc global_report                 # compile the reports in docs/global_report/
+make doc global_report compute         # recompute their figures first
 \end{lstlisting}
-The figures of these notes are reproducible. \texttt{make figures} runs the program on every namelist in
-\texttt{docs/figures/configs/}, writing the output to \texttt{docs/figures/data/}. Then the script
-\texttt{plot\_figures.py} in \texttt{docs/figures/} draws the PDF figures from those files.
+The figures of these notes are reproducible. \texttt{make doc global\_report compute} runs the program on every
+namelist in \texttt{docs/global\_report/figures/configs/}, writing the output to
+\texttt{docs/global\_report/figures/data/}. Then the script \texttt{plot\_figures.py} in
+\texttt{docs/global\_report/figures/} draws the PDF figures from those files.
 
 \subsection{Verification}
 

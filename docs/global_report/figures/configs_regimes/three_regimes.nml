@@ -1,4 +1,4 @@
-! Figures of docs/three_regimes.tex (same parameters as config_regimes.nml).
+! Figures of docs/global_report/three_regimes.tex (same parameters as config_regimes.nml).
 ! The chain has n_q qubits, J = (1/2) sum_i sigma_i, j = n_q/2:
 ! H = k/(2j) sum_{i,l} V_il sigma^z_i sigma^z_l + p J_y sum_n delta(t-n), V_il = 1/4 (H_zz = J_z^2),
 ! U = exp(-i k/(2j) H_zz) exp(-i p J_y).
@@ -30,5 +30,5 @@
 /
 
 &output
-  out_dir = 'docs/figures/data/three_regimes'
+  out_dir = 'docs/global_report/figures/data/three_regimes'
 /
