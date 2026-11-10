@@ -1,5 +1,5 @@
 ! One-period (Floquet) operator of the quantum kicked top,
-!   U = exp(-i k/(2j) J_z**2) exp(-i p J_y)      (first the rotation, then the kick),
+!   U = exp(-i k/(2j) J_z**2) exp(-i p J_y)      (first the kick, then the torsion),
 ! the quantum counterpart of the classical map, Sec. 9 [sec:quantum].
 module floquet_mod
   use kinds_mod, only: wp
@@ -45,8 +45,8 @@ contains
     r = matmul(w, conjg(transpose(v)))
   end function exp_jy
 
-  ! U = K R with R = exp(-i p J_y) and the diagonal kick
-  ! K = diag(exp(-i k m**2/(2j))). v, mu: eigen-decomposition of J_y.
+  ! U = T R with the kick R = exp(-i p J_y) and the diagonal torsion
+  ! T = diag(exp(-i k m**2/(2j))). v, mu: eigen-decomposition of J_y.
   pure function floquet_operator(j, p, k, v, mu) result(u)
     real(wp), intent(in) :: j
     real(wp), intent(in) :: p

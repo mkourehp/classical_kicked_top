@@ -2,7 +2,7 @@
 
 All computation is done in Fortran; this script only reads the ASCII files in the
 output directory and plots them. Equation and section numbers refer to the lecture
-notes, docs/kicked_top_notes.pdf.
+notes, docs/lecture_note/kicked_top_notes.pdf.
 """
 
 import argparse

@@ -4,10 +4,10 @@ Trajectories and phase space of the classical kicked top. The computation is in 
 
 ## Model
 
-A unit vector $(X, Y, Z)$ on the sphere. One kick (Haake convention):
+Hamiltonian $H(t) = \frac{k}{2j}J_z^2 + p\,J_y\sum_n\delta(t-n)$: a continuous torsion about $z$ and, at integer times, a kick that rotates about $y$. A unit vector $(X, Y, Z)$ on the sphere, observed just before each kick. One period:
 
-1. rotation about $y$ by $p$:  $X' = X\cos p + Z\sin p,\ Y' = Y,\ Z' = -X\sin p + Z\cos p$
-2. torsion about $z$ by $kZ'$: $X'' = X'\cos kZ' - Y'\sin kZ',\ Y'' = X'\sin kZ' + Y'\cos kZ',\ Z'' = Z'$
+1. kick, rotation about $y$ by $p$:  $X' = X\cos p + Z\sin p,\ Y' = Y,\ Z' = -X\sin p + Z\cos p$
+2. free torsion about $z$ by $kZ'$: $X'' = X'\cos kZ' - Y'\sin kZ',\ Y'' = X'\sin kZ' + Y'\cos kZ',\ Z'' = Z'$
 
 Phase space is shown in the canonical (area-preserving) coordinates $(\phi, Z = \cos\theta)$.
 
@@ -21,7 +21,7 @@ src/common/kinds_mod.f90        precision and constants
 src/common/sphere_mod.f90       unit vector from (theta, phi), equal-area grid in (phi, Z)
 src/common/io_utils_mod.f90     namelist-read check, output directory
 src/classical/config_mod.f90    namelist reading and validation
-src/classical/map_mod.f90       one kick (rotation + torsion) and its tangent map
+src/classical/map_mod.f90       one period (kick + torsion) and its tangent map
 src/classical/energy_mod.f90    energy terms pY, (k/2)Z^2 and their sum
 src/classical/init_mod.f90      initial conditions: single / grid / random
 src/classical/evolve_mod.f90    iteration of the map over all initial conditions
@@ -41,16 +41,20 @@ scripts/quantum_post_processor.py  quantum plots
 
 New features go in their own module with their own namelist group, called from `main.f90`.
 
-The physics and the code are explained in the lecture notes `docs/kicked_top_notes.pdf` (`make docs` rebuilds them, `make figures` recomputes their figures). Code comments cite the equations they implement by number and LaTeX label, e.g. `eq. (20) [eq:map]`.
+The physics and the code are explained in the lecture notes `docs/lecture_note/kicked_top_notes.pdf` (`make doc lecture_note` rebuilds them, `make doc lecture_note compute` first recomputes their figures). Code comments cite the equations they implement by number and LaTeX label, e.g. `eq. (20) [eq:map]`.
 
 ## Usage
 
 ```bash
-make                                    # builds build/kicked_top and build/kicked_top_quantum
-./build/kicked_top config.nml           # or: make run
+make                                    # builds all programs: kicked_top, kicked_top_quantum, kicked_top_spin_chain, kicked_top_combined
+make classical                          # builds and runs ./build/kicked_top config_classical.nml
+make spin_chain                         # qubit chain alone: ./build/kicked_top_spin_chain config_spin_chain.nml
+make combined                           # classical sections + qubit chain: ./build/kicked_top_combined config_combined.nml
 python scripts/post_processor.py        # output/phase_space.png
 python scripts/post_processor.py --sphere --show   # also 3D trajectory, open windows
 python scripts/post_processor.py --lyapunov        # also output/lyapunov.png (needs &lyapunov enabled)
+python scripts/spin_chain_post_processor.py        # output_spin_chain/*.png (Husimi, fidelity, total and single-qubit spins)
+python scripts/combined_post_processor.py          # output_combined/*.png (the same plus the classical sections)
 ```
 
 Python needs `numpy` and `matplotlib`. The quantum code needs LAPACK and BLAS (Ubuntu: `sudo apt install liblapack-dev libblas-dev`).
@@ -61,7 +65,7 @@ The notebook `notebooks/kam_theory.ipynb` explains KAM theory, the Poincaré–B
 
 | group | name | meaning |
 |---|---|---|
-| `&system` | `p`, `k` | rotation angle and torsion strength |
+| `&system` | `p`, `k` | kick rotation angle and torsion strength |
 | `&simulation` | `n_kicks` | kicks recorded after the transient |
 | | `n_transient` | kicks discarded before recording |
 | | `save_every` | store every `save_every`-th kick |
@@ -79,16 +83,15 @@ ASCII, one block per initial condition separated by a blank line; first line is 
 
 - `trajectory.dat`: `ic n X Y Z`
 - `phase_space.dat`: `ic n phi Z`, with $\phi \in (-\pi, \pi]$
-- `energy.dat`: `pY  k/2*Z^2  total`, row-aligned with the two files above
+- `energy.dat` (modes `single` and `grid`): `pY  k/2*Z^2  total`, row-aligned with the two files above
 - `lyapunov.dat` (if `&lyapunov` is enabled): `ic phi0 Z0 Lambda`, one line per initial condition
 
 ## Quantum kicked top
 
-$U = e^{-i\frac{k}{2j}J_z^2}e^{-ipJ_y}$ on the $2j+1$ states $|j,m\rangle$. A spin coherent state centred at $(\theta_0, \phi_0)$ is evolved kick by kick; optionally the quasienergies of $U$ are computed separately in the two parity sectors of $e^{-i\pi J_y}$.
+$U = e^{-i\frac{k}{2j}J_z^2}e^{-ipJ_y}$ (kick, then torsion) on the $2j+1$ states $|j,m\rangle$. A spin coherent state centred at $(\theta_0, \phi_0)$ is evolved kick by kick; optionally the quasienergies of $U$ are computed separately in the two parity sectors of $e^{-i\pi J_y}$.
 
 ```bash
-make quantum                                       # builds build/kicked_top_quantum
-./build/kicked_top_quantum config_quantum.nml      # or: make run-quantum
+make quantum                                       # builds and runs ./build/kicked_top_quantum config_quantum.nml
 python scripts/quantum_post_processor.py           # output_quantum/*.png
 python scripts/quantum_post_processor.py --classical output/trajectory.dat --sphere
 ```
@@ -97,7 +100,7 @@ python scripts/quantum_post_processor.py --classical output/trajectory.dat --sph
 
 | group | name | meaning |
 |---|---|---|
-| `&system` | `p`, `k`, `j` | rotation angle, torsion strength, spin (integer or half-integer) |
+| `&system` | `p`, `k`, `j` | kick rotation angle, torsion strength, spin (integer or half-integer) |
 | `&simulation` | `n_kicks` | number of kicks |
 | `&initial` | `theta0`, `phi0` | centre of the initial coherent state |
 | `&husimi` | `enabled`, `n_theta`, `n_phi`, `kicks` | Husimi snapshots on the equal-area grid at the listed kicks |

@@ -223,9 +223,11 @@ __marimo__/
 # Build and simulation output
 build/
 output/
+output_combined/
+output_spin_chain/
 
-# Lecture notes
-docs/figures/data/
+# Reports
+docs/*/figures/data/
 *.aux
 *.fdb_latexmk
 *.fls

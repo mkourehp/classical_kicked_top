@@ -14,8 +14,8 @@ module config_mod
 
   type :: config_t
     ! &system
-    real(wp) :: p              ! rotation angle per period, eq. (12)
-    real(wp) :: k              ! torsion (kick) strength, eq. (12)
+    real(wp) :: p              ! kick: rotation angle about y, eq. (12)
+    real(wp) :: k              ! torsion strength per period, eq. (12)
     ! &simulation
     integer :: n_kicks         ! kicks recorded after the transient
     integer :: n_transient     ! kicks discarded before recording

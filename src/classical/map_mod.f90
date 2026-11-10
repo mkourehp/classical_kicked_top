@@ -10,9 +10,10 @@ module map_mod
 
 contains
 
-  ! One period of the kicked top, s_{n+1} = F(s_n), eq. (20) [eq:map]:
-  ! free precession about y by the angle p, eq. (17) [eq:rotation-y],
-  ! followed by the torsion about z by the angle k*Z', eq. (19) [eq:torsion].
+  ! One period of the kicked top, s_{n+1} = F(s_n), eq. (20) [eq:map], from just
+  ! before a kick to just before the next one: the kick, a rotation about y by
+  ! the angle p, eq. (17) [eq:rotation-y], followed by the free torsion about z
+  ! by the angle k*Z', eq. (19) [eq:torsion].
   pure function kick(s, p, k) result(s_new)
     real(wp), intent(in) :: s(3)
     real(wp), intent(in) :: p
@@ -25,7 +26,7 @@ contains
   end function kick
 
   ! Tangent map: the image DF(s)*ds of a small displacement ds of s under one
-  ! kick, eq. (34) [eq:tangent]. The rotation is linear; the torsion
+  ! period, eq. (34) [eq:tangent]. The rotation is linear; the torsion
   ! R_z(k*Z')s' also turns with the change k*dZ' of its angle, which adds
   ! k*dZ' * (z_hat x s_{n+1}). If ds is tangent to the sphere at s, the result
   ! is tangent at F(s).
