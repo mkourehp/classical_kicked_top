@@ -53,6 +53,8 @@ make combined                           # classical sections + qubit chain: ./bu
 python scripts/post_processor.py        # output/phase_space.png
 python scripts/post_processor.py --sphere --show   # also 3D trajectory, open windows
 python scripts/post_processor.py --lyapunov        # also output/lyapunov.png (needs &lyapunov enabled)
+python scripts/spin_chain_post_processor.py        # output_spin_chain/*.png (Husimi, fidelity, total and single-qubit spins)
+python scripts/combined_post_processor.py          # output_combined/*.png (the same plus the classical sections)
 ```
 
 Python needs `numpy` and `matplotlib`. The quantum code needs LAPACK and BLAS (Ubuntu: `sudo apt install liblapack-dev libblas-dev`).
