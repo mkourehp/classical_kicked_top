@@ -15,5 +15,5 @@
   n_phi = 1
 /
 &output
-  out_dir = 'docs/kicked_top_notes/figures/data/single_regular_shifted'
+  out_dir = 'docs/lecture_note/figures/data/single_regular_shifted'
 /

@@ -1352,13 +1352,13 @@ make                                   # build/kicked_top
 python scripts/post_processor.py       # output/phase_space.png
 python scripts/post_processor.py --sphere --show
 python scripts/post_processor.py --lyapunov    # output/lyapunov.png
-make doc kicked_top_notes              # compile these notes, docs/kicked_top_notes/
-make doc kicked_top_notes compute      # recompute their figures first
+make doc lecture_note                  # compile these notes, docs/lecture_note/
+make doc lecture_note compute          # recompute their figures first
 \end{lstlisting}
-The figures of these notes are reproducible. \texttt{make doc kicked\_top\_notes compute} runs the program on every
-namelist in \texttt{docs/kicked\_top\_notes/figures/configs/}, writing the output to
-\texttt{docs/kicked\_top\_notes/figures/data/}. Then the script \texttt{plot\_figures.py} in
-\texttt{docs/kicked\_top\_notes/figures/} draws the PDF figures from those files.
+The figures of these notes are reproducible. \texttt{make doc lecture\_note compute} runs the program on every
+namelist in \texttt{docs/lecture\_note/figures/configs/}, writing the output to
+\texttt{docs/lecture\_note/figures/data/}. Then the script \texttt{plot\_figures.py} in
+\texttt{docs/lecture\_note/figures/} draws the PDF figures from those files.
 
 \subsection{Verification}
 

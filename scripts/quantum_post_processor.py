@@ -2,7 +2,7 @@
 
 All computation is done in Fortran (build/kicked_top_quantum); this script only reads
 the ASCII files in the output directory and plots them. Section numbers refer to the
-lecture notes, docs/kicked_top_notes/kicked_top_notes.pdf.
+lecture notes, docs/lecture_note/kicked_top_notes.pdf.
 """
 
 import argparse

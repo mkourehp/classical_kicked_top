@@ -15,5 +15,5 @@
   n_phi = 20
 /
 &output
-  out_dir = 'docs/kicked_top_notes/figures/data/portrait_k3.0'
+  out_dir = 'docs/lecture_note/figures/data/portrait_k3.0'
 /
