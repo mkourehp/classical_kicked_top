@@ -1,6 +1,6 @@
-"""Plots the plot-ready data written by kicked_top_regimes.
+"""Plots the plot-ready data written by kicked_top_combined.
 
-All computation is done in Fortran (build/kicked_top_regimes); this script only reads
+All computation is done in Fortran (build/kicked_top_combined); this script only reads
 the ASCII files in the output directory and plots them, one column per value of p:
 the classical Poincare sections, the Husimi snapshots of the qubit chain at t = 0,
 t_r and 2 t_r, the fidelity, the total spin and the single-qubit spins.
@@ -13,11 +13,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-class RegimesPostProcessor:
-    """Reads the output in out_dir (layout described in src/regimes/regimes_io_mod.f90)
+class CombinedPostProcessor:
+    """Reads the output in out_dir (layout described in src/combined/combined_io_mod.f90)
     and writes PNG figures into it."""
 
-    def __init__(self, out_dir="output_regimes"):
+    def __init__(self, out_dir="output_combined"):
         self.out_dir = Path(out_dir)
         self.regimes = np.loadtxt(self.out_dir / "regimes.dat", ndmin=2)
 
@@ -138,11 +138,11 @@ class RegimesPostProcessor:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--out-dir", default="output_regimes", help="directory with the kicked_top_regimes output")
+    parser.add_argument("--out-dir", default="output_combined", help="directory with the kicked_top_combined output")
     parser.add_argument("--show", action="store_true", help="open the figures in a window")
     args = parser.parse_args()
 
-    rp = RegimesPostProcessor(args.out_dir)
+    rp = CombinedPostProcessor(args.out_dir)
     rp.plot_sections()
     rp.plot_husimi()
     rp.plot_fidelity()

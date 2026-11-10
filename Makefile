@@ -8,7 +8,7 @@ COMMON    = kinds_mod sphere_mod io_utils_mod
 CLASSICAL = config_mod map_mod energy_mod init_mod evolve_mod lyapunov_mod io_mod main
 QUANTUM   = quantum_config_mod spin_mod floquet_mod husimi_mod spectrum_mod quantum_io_mod quantum_main
 CHAIN     = chain_state_mod chain_floquet_mod chain_observables_mod
-REGIMES   = regimes_config_mod regimes_io_mod chain_run_mod regimes_main
+COMBINED  = combined_config_mod combined_io_mod chain_run_mod combined_main
 SPIN_CHAIN = spin_chain_main
 
 objs = $(addprefix $(BUILD)/, $(addsuffix .o, $(1)))
@@ -16,22 +16,22 @@ COMMON_OBJS    = $(call objs, $(COMMON))
 CLASSICAL_OBJS = $(call objs, $(CLASSICAL))
 QUANTUM_OBJS   = $(call objs, $(QUANTUM))
 CHAIN_OBJS     = $(call objs, $(CHAIN))
-REGIMES_OBJS   = $(call objs, $(REGIMES))
+COMBINED_OBJS   = $(call objs, $(COMBINED))
 SPIN_CHAIN_OBJS = $(call objs, $(SPIN_CHAIN))
-# kicked_top_spin_chain shares everything of kicked_top_regimes except its driver and the classical part
-SPIN_CHAIN_DEPS = $(call objs, spin_mod husimi_mod regimes_config_mod regimes_io_mod chain_run_mod)
-# kicked_top_regimes reuses the classical modules and the spin-j Husimi code
-REGIMES_DEPS   = $(call objs, config_mod map_mod energy_mod init_mod evolve_mod io_mod spin_mod husimi_mod)
+# kicked_top_spin_chain shares everything of kicked_top_combined except its driver and the classical part
+SPIN_CHAIN_DEPS = $(call objs, spin_mod husimi_mod combined_config_mod combined_io_mod chain_run_mod)
+# kicked_top_combined reuses the classical modules and the spin-j Husimi code
+COMBINED_DEPS   = $(call objs, config_mod map_mod energy_mod init_mod evolve_mod io_mod spin_mod husimi_mod)
 
 EXE  = $(BUILD)/kicked_top
 QEXE = $(BUILD)/kicked_top_quantum
-REXE = $(BUILD)/kicked_top_regimes
+CEXE = $(BUILD)/kicked_top_combined
 SEXE = $(BUILD)/kicked_top_spin_chain
 
 # make: builds all programs. make classical | quantum | spin_chain | combined: builds and runs one.
 .PHONY: all classical quantum spin_chain combined clean doc
 
-all: $(EXE) $(QEXE) $(SEXE) $(REXE)
+all: $(EXE) $(QEXE) $(SEXE) $(CEXE)
 
 classical: $(EXE)
 	./$(EXE) config_classical.nml
@@ -42,8 +42,8 @@ quantum: $(QEXE)
 spin_chain: $(SEXE)
 	./$(SEXE) config_spin_chain.nml
 
-combined: $(REXE)
-	./$(REXE) config_regimes.nml
+combined: $(CEXE)
+	./$(CEXE) config_combined.nml
 
 $(EXE): $(COMMON_OBJS) $(CLASSICAL_OBJS)
 	$(FC) $(FFLAGS) -o $@ $^
@@ -51,7 +51,7 @@ $(EXE): $(COMMON_OBJS) $(CLASSICAL_OBJS)
 $(QEXE): $(COMMON_OBJS) $(QUANTUM_OBJS)
 	$(FC) $(FFLAGS) -o $@ $^ $(LAPACK)
 
-$(REXE): $(COMMON_OBJS) $(REGIMES_DEPS) $(CHAIN_OBJS) $(REGIMES_OBJS)
+$(CEXE): $(COMMON_OBJS) $(COMBINED_DEPS) $(CHAIN_OBJS) $(COMBINED_OBJS)
 	$(FC) $(FFLAGS) -o $@ $^
 
 $(SEXE): $(COMMON_OBJS) $(SPIN_CHAIN_DEPS) $(CHAIN_OBJS) $(SPIN_CHAIN_OBJS)
@@ -69,7 +69,7 @@ $(BUILD)/%.o: $(SRC)/quantum/%.f90 | $(BUILD)
 $(BUILD)/%.o: $(SRC)/chain/%.f90 | $(BUILD)
 	$(FC) $(FFLAGS) -c $< -o $@
 
-$(BUILD)/%.o: $(SRC)/regimes/%.f90 | $(BUILD)
+$(BUILD)/%.o: $(SRC)/combined/%.f90 | $(BUILD)
 	$(FC) $(FFLAGS) -c $< -o $@
 
 $(BUILD)/%.o: $(SRC)/spin_chain/%.f90 | $(BUILD)
@@ -80,7 +80,7 @@ $(BUILD):
 
 # module dependencies
 $(BUILD)/sphere_mod.o: $(BUILD)/kinds_mod.o
-$(CLASSICAL_OBJS) $(QUANTUM_OBJS) $(CHAIN_OBJS) $(REGIMES_OBJS) $(SPIN_CHAIN_OBJS): $(COMMON_OBJS)
+$(CLASSICAL_OBJS) $(QUANTUM_OBJS) $(CHAIN_OBJS) $(COMBINED_OBJS) $(SPIN_CHAIN_OBJS): $(COMMON_OBJS)
 
 $(BUILD)/map_mod.o $(BUILD)/energy_mod.o: $(BUILD)/config_mod.o
 $(BUILD)/init_mod.o:     $(BUILD)/config_mod.o
@@ -93,15 +93,15 @@ $(BUILD)/floquet_mod.o $(BUILD)/husimi_mod.o: $(BUILD)/spin_mod.o
 $(BUILD)/quantum_io_mod.o: $(BUILD)/quantum_config_mod.o $(BUILD)/spectrum_mod.o
 $(BUILD)/quantum_main.o:   $(filter-out $(BUILD)/quantum_main.o, $(QUANTUM_OBJS))
 
-$(BUILD)/regimes_io_mod.o: $(BUILD)/regimes_config_mod.o
-$(BUILD)/chain_run_mod.o:  $(BUILD)/husimi_mod.o $(BUILD)/regimes_io_mod.o $(CHAIN_OBJS)
-$(BUILD)/regimes_main.o:   $(REGIMES_DEPS) $(CHAIN_OBJS) $(filter-out $(BUILD)/regimes_main.o, $(REGIMES_OBJS))
+$(BUILD)/combined_io_mod.o: $(BUILD)/combined_config_mod.o
+$(BUILD)/chain_run_mod.o:  $(BUILD)/husimi_mod.o $(BUILD)/combined_io_mod.o $(CHAIN_OBJS)
+$(BUILD)/combined_main.o:   $(COMBINED_DEPS) $(CHAIN_OBJS) $(filter-out $(BUILD)/combined_main.o, $(COMBINED_OBJS))
 $(BUILD)/spin_chain_main.o: $(SPIN_CHAIN_DEPS) $(CHAIN_OBJS)
 
 # reports: make doc <dir> [compute], <dir> a directory in docs/.
 # Without compute, compiles every .tex in docs/<dir>, assuming its figures exist.
-# With compute, first runs every namelist in docs/<dir>/figures/configs{,_quantum,_spin_chain,_regimes}/
-# with kicked_top, kicked_top_quantum, kicked_top_spin_chain and kicked_top_regimes,
+# With compute, first runs every namelist in docs/<dir>/figures/configs{,_quantum,_spin_chain,_combined}/
+# with kicked_top, kicked_top_quantum, kicked_top_spin_chain and kicked_top_combined,
 # then every docs/<dir>/figures/plot_*.py.
 DOCS = docs
 ifeq (doc,$(firstword $(MAKECMDGOALS)))
@@ -114,13 +114,13 @@ endif
 REPORT_DIR = $(DOCS)/$(REPORT)
 REPORT_FIG = $(REPORT_DIR)/figures
 
-doc: $(if $(COMPUTE),$(EXE) $(QEXE) $(SEXE) $(REXE))
+doc: $(if $(COMPUTE),$(EXE) $(QEXE) $(SEXE) $(CEXE))
 	@test -n "$(REPORT)" && test -d "$(REPORT_DIR)" || { echo "usage: make doc <dir> [compute], <dir> a directory in $(DOCS)/"; exit 1; }
 ifneq ($(COMPUTE),)
 	for f in $(wildcard $(REPORT_FIG)/configs/*.nml); do ./$(EXE) $$f || exit 1; done
 	for f in $(wildcard $(REPORT_FIG)/configs_quantum/*.nml); do ./$(QEXE) $$f || exit 1; done
 	for f in $(wildcard $(REPORT_FIG)/configs_spin_chain/*.nml); do ./$(SEXE) $$f || exit 1; done
-	for f in $(wildcard $(REPORT_FIG)/configs_regimes/*.nml); do ./$(REXE) $$f || exit 1; done
+	for f in $(wildcard $(REPORT_FIG)/configs_combined/*.nml); do ./$(CEXE) $$f || exit 1; done
 	for f in $(wildcard $(REPORT_FIG)/plot_*.py); do python3 $$f || exit 1; done
 endif
 	cd $(REPORT_DIR) && latexmk -pdf -interaction=nonstopmode -halt-on-error $(notdir $(wildcard $(REPORT_DIR)/*.tex))

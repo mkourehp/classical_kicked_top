@@ -9,8 +9,8 @@
 !   S4  time reversal of the chain: t_r forward steps U, then t_r backward
 !       steps U^dagger (coupling 2 pi - k/(2j), kick -p); with butterfly_effect
 !       sigma^a (a = flip_axis) acts on qubit i_flip at t_r, before the backward leg.
-! Usage: kicked_top_regimes [namelist file]   (default config_regimes.nml)
-program kicked_top_regimes
+! Usage: kicked_top_combined [namelist file]   (default config_combined.nml)
+program kicked_top_combined
   use kinds_mod, only: wp
   use io_utils_mod, only: make_dir
   use sphere_mod, only: equal_area_grid
@@ -18,8 +18,8 @@ program kicked_top_regimes
   use init_mod, only: initial_conditions
   use evolve_mod, only: evolve
   use io_mod, only: write_results
-  use regimes_config_mod, only: rconfig_t, read_regimes_config, str_len
-  use regimes_io_mod, only: run_dir, write_regimes
+  use combined_config_mod, only: rconfig_t, read_combined_config, str_len
+  use combined_io_mod, only: run_dir, write_regimes
   use chain_state_mod, only: ferromagnetic_direction
   use chain_floquet_mod, only: uniform_coupling, zz_energies
   use chain_run_mod, only: run_chain
@@ -31,10 +31,10 @@ program kicked_top_regimes
   real(wp), allocatable :: hus_theta(:), hus_phi(:), e_zz(:)
   integer :: i
 
-  cfg_path = 'config_regimes.nml'
+  cfg_path = 'config_combined.nml'
   if (command_argument_count() >= 1) call get_command_argument(1, cfg_path)
 
-  call read_regimes_config(trim(cfg_path), cfg)
+  call read_combined_config(trim(cfg_path), cfg)
   call ferromagnetic_direction(cfg%s0, cfg%n_q, cfg%pol, theta0, phi0)
   call make_dir(trim(cfg%out_dir))
   call write_regimes(cfg)
@@ -46,7 +46,7 @@ program kicked_top_regimes
 
   do i = 1, size(cfg%p)
     call run_classical(cfg%p(i), run_dir(cfg, i)//'/classical')
-    call run_chain(cfg, cfg%p(i), theta0, phi0, e_zz, hus_theta, hus_phi, run_dir(cfg, i)//'/chain', 'kicked_top_regimes')
+    call run_chain(cfg, cfg%p(i), theta0, phi0, e_zz, hus_theta, hus_phi, run_dir(cfg, i)//'/chain', 'kicked_top_combined')
   end do
 
 contains
@@ -85,4 +85,4 @@ contains
     call write_results(c, orbit)
   end subroutine run_classical
 
-end program kicked_top_regimes
+end program kicked_top_combined

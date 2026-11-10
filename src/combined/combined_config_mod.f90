@@ -1,12 +1,12 @@
-! Configuration of kicked_top_regimes, read from a namelist file (default
-! config_regimes.nml). One parameter set drives the classical kicked top and
+! Configuration of kicked_top_combined, read from a namelist file (default
+! config_combined.nml). One parameter set drives the classical kicked top and
 ! the qubit chain for every rotation angle p in the list p(:).
-module regimes_config_mod
+module combined_config_mod
   use kinds_mod, only: wp
   use io_utils_mod, only: check_nml_read
   implicit none
   private
-  public :: rconfig_t, read_regimes_config, str_len
+  public :: rconfig_t, read_combined_config, str_len
 
   integer, parameter :: str_len = 256   ! length of string parameters
   integer, parameter :: max_p = 20      ! maximum number of p values
@@ -31,7 +31,7 @@ module regimes_config_mod
 
 contains
 
-  subroutine read_regimes_config(path, cfg)
+  subroutine read_combined_config(path, cfg)
     character(len=*), intent(in) :: path
     type(rconfig_t), intent(out) :: cfg
 
@@ -59,38 +59,38 @@ contains
     butterfly_effect = .false.
     i_flip = 1
     flip_axis = 'x'
-    out_dir = 'output_regimes'
+    out_dir = 'output_combined'
 
     open(newunit=u, file=path, status='old', action='read', iostat=ios)
-    if (ios /= 0) error stop 'regimes_config_mod: cannot open namelist file '//trim(path)
+    if (ios /= 0) error stop 'combined_config_mod: cannot open namelist file '//trim(path)
 
     read(u, nml=system, iostat=ios)
-    call check_nml_read(ios, 'system', 'regimes_config_mod')
+    call check_nml_read(ios, 'system', 'combined_config_mod')
     rewind(u)
     read(u, nml=initial, iostat=ios)
-    call check_nml_read(ios, 'initial', 'regimes_config_mod')
+    call check_nml_read(ios, 'initial', 'combined_config_mod')
     rewind(u)
     n_kicks = 500
     n_theta = 20
     n_phi = 20
     read(u, nml=classical, iostat=ios)
-    call check_nml_read(ios, 'classical', 'regimes_config_mod')
+    call check_nml_read(ios, 'classical', 'combined_config_mod')
     cfg%n_kicks = n_kicks
     cfg%n_theta = n_theta
     cfg%n_phi = n_phi
     rewind(u)
     read(u, nml=chain, iostat=ios)
-    call check_nml_read(ios, 'chain', 'regimes_config_mod')
+    call check_nml_read(ios, 'chain', 'combined_config_mod')
     rewind(u)
     n_theta = 100
     n_phi = 200
     read(u, nml=husimi, iostat=ios)
-    call check_nml_read(ios, 'husimi', 'regimes_config_mod')
+    call check_nml_read(ios, 'husimi', 'combined_config_mod')
     cfg%hus_n_theta = n_theta
     cfg%hus_n_phi = n_phi
     rewind(u)
     read(u, nml=output, iostat=ios)
-    call check_nml_read(ios, 'output', 'regimes_config_mod')
+    call check_nml_read(ios, 'output', 'combined_config_mod')
     close(u)
 
     cfg%n_q = n_q
@@ -105,19 +105,19 @@ contains
     cfg%out_dir = out_dir
 
     call validate(cfg)
-  end subroutine read_regimes_config
+  end subroutine read_combined_config
 
   subroutine validate(cfg)
     type(rconfig_t), intent(in) :: cfg
 
-    if (cfg%n_q < 1 .or. cfg%n_q > 26) error stop 'regimes_config_mod: n_q must be in 1 .. 26'
-    if (size(cfg%p) < 1) error stop 'regimes_config_mod: give at least one value of p'
-    if (cfg%n_kicks < 1) error stop 'regimes_config_mod: n_kicks must be >= 1'
-    if (cfg%n_theta < 1 .or. cfg%n_phi < 1) error stop 'regimes_config_mod: n_theta and n_phi must be >= 1'
-    if (cfg%t_r < 1) error stop 'regimes_config_mod: t_r must be >= 1'
-    if (cfg%i_flip < 1 .or. cfg%i_flip > cfg%n_q) error stop 'regimes_config_mod: i_flip must be in 1 .. n_q'
-    if (index('xyz', cfg%flip_axis) == 0) error stop "regimes_config_mod: flip_axis must be 'x', 'y' or 'z'"
-    if (cfg%hus_n_theta < 1 .or. cfg%hus_n_phi < 1) error stop 'regimes_config_mod: Husimi grid must be >= 1'
+    if (cfg%n_q < 1 .or. cfg%n_q > 26) error stop 'combined_config_mod: n_q must be in 1 .. 26'
+    if (size(cfg%p) < 1) error stop 'combined_config_mod: give at least one value of p'
+    if (cfg%n_kicks < 1) error stop 'combined_config_mod: n_kicks must be >= 1'
+    if (cfg%n_theta < 1 .or. cfg%n_phi < 1) error stop 'combined_config_mod: n_theta and n_phi must be >= 1'
+    if (cfg%t_r < 1) error stop 'combined_config_mod: t_r must be >= 1'
+    if (cfg%i_flip < 1 .or. cfg%i_flip > cfg%n_q) error stop 'combined_config_mod: i_flip must be in 1 .. n_q'
+    if (index('xyz', cfg%flip_axis) == 0) error stop "combined_config_mod: flip_axis must be 'x', 'y' or 'z'"
+    if (cfg%hus_n_theta < 1 .or. cfg%hus_n_phi < 1) error stop 'combined_config_mod: Husimi grid must be >= 1'
   end subroutine validate
 
-end module regimes_config_mod
+end module combined_config_mod

@@ -1,4 +1,4 @@
-! ASCII output of kicked_top_regimes. Layout of cfg%out_dir:
+! ASCII output of kicked_top_combined. Layout of cfg%out_dir:
 !   regimes.dat                       one line per run: i, p, k, n_q
 !   p_<i>/classical/section/          classical Poincare section on a grid (files of io_mod)
 !   p_<i>/classical/orbit/            classical orbit from the initial state (files of io_mod)
@@ -8,9 +8,9 @@
 !   p_<i>/chain/husimi.dat            t  phi Z X Y Q   (blank line between snapshots)
 !   p_<i>/chain/summary.dat           name value (correctness checks)
 ! Steps t = 0 .. t_r are forward, t_r+1 .. 2 t_r backward.
-module regimes_io_mod
+module combined_io_mod
   use kinds_mod, only: wp
-  use regimes_config_mod, only: rconfig_t
+  use combined_config_mod, only: rconfig_t
   use sphere_mod, only: spherical_to_cartesian
   implicit none
   private
@@ -34,7 +34,7 @@ contains
     integer :: u, i
 
     open(newunit=u, file=trim(cfg%out_dir)//'/regimes.dat', status='replace', action='write')
-    write(u, '(a)') '# kicked_top_regimes: U = exp(-i k/(2j) H_zz) exp(-i p J_y), j = n_q/2'
+    write(u, '(a)') '# kicked_top_combined: U = exp(-i k/(2j) H_zz) exp(-i p J_y), j = n_q/2'
     write(u, '(a)') '# i p k n_q'
     do i = 1, size(cfg%p)
       write(u, '(i0,2(1x,es23.15e3),1x,i0)') i, cfg%p(i), cfg%k, cfg%n_q
@@ -122,4 +122,4 @@ contains
     close(u)
   end subroutine write_summary
 
-end module regimes_io_mod
+end module combined_io_mod

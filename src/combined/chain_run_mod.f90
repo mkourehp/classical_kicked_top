@@ -1,14 +1,14 @@
 ! Time evolution of the qubit chain for one rotation angle p, shared by
-! kicked_top_regimes (make combined) and kicked_top_spin_chain (make spin_chain):
+! kicked_top_combined (make combined) and kicked_top_spin_chain (make spin_chain):
 ! t_r forward steps U, then (with butterfly_effect) sigma^a on qubit i_flip,
 ! a = flip_axis, then t_r backward steps (coupling 2 pi - k/(2j), kick -p).
-! Writes the files of regimes_io_mod in dir.
+! Writes the files of combined_io_mod in dir.
 module chain_run_mod
   use kinds_mod, only: wp
   use io_utils_mod, only: make_dir
   use husimi_mod, only: husimi, husimi_norm
-  use regimes_config_mod, only: rconfig_t
-  use regimes_io_mod, only: write_chain, write_husimi, write_summary
+  use combined_config_mod, only: rconfig_t
+  use combined_io_mod, only: write_chain, write_husimi, write_summary
   use chain_state_mod, only: product_coherent_state, dicke_amplitudes
   use chain_floquet_mod, only: flip_qubit, forward_step, backward_step
   use chain_observables_mod, only: fidelity, site_spins, total_spin
