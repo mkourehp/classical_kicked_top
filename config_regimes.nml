@@ -1,4 +1,4 @@
-! Classical kicked top and qubit chain in three regimes (kicked_top_regimes).
+! Classical kicked top and qubit chain in three regimes (kicked_top_regimes, make combined).
 ! The chain has n_q qubits, J = (1/2) sum_i sigma_i, j = n_q/2:
 ! H = k/(2j) sum_{i,l} V_il sigma^z_i sigma^z_l + p J_y sum_n delta(t-n), V_il = 1/4 (H_zz = J_z^2),
 ! U = exp(-i k/(2j) H_zz) exp(-i p J_y).

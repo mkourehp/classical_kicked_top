@@ -46,8 +46,10 @@ The physics and the code are explained in the lecture notes `docs/lecture_note/k
 ## Usage
 
 ```bash
-make                                    # builds build/kicked_top and build/kicked_top_quantum
-./build/kicked_top config.nml           # or: make run
+make                                    # builds all programs: kicked_top, kicked_top_quantum, kicked_top_spin_chain, kicked_top_regimes
+make classical                          # builds and runs ./build/kicked_top config_classical.nml
+make spin_chain                         # qubit chain alone: ./build/kicked_top_spin_chain config_spin_chain.nml
+make combined                           # classical sections + qubit chain: ./build/kicked_top_regimes config_regimes.nml
 python scripts/post_processor.py        # output/phase_space.png
 python scripts/post_processor.py --sphere --show   # also 3D trajectory, open windows
 python scripts/post_processor.py --lyapunov        # also output/lyapunov.png (needs &lyapunov enabled)
@@ -87,8 +89,7 @@ ASCII, one block per initial condition separated by a blank line; first line is 
 $U = e^{-i\frac{k}{2j}J_z^2}e^{-ipJ_y}$ (kick, then torsion) on the $2j+1$ states $|j,m\rangle$. A spin coherent state centred at $(\theta_0, \phi_0)$ is evolved kick by kick; optionally the quasienergies of $U$ are computed separately in the two parity sectors of $e^{-i\pi J_y}$.
 
 ```bash
-make quantum                                       # builds build/kicked_top_quantum
-./build/kicked_top_quantum config_quantum.nml      # or: make run-quantum
+make quantum                                       # builds and runs ./build/kicked_top_quantum config_quantum.nml
 python scripts/quantum_post_processor.py           # output_quantum/*.png
 python scripts/quantum_post_processor.py --classical output/trajectory.dat --sphere
 ```

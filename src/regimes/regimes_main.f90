@@ -1,5 +1,6 @@
 ! Driver of the three-regime study: for every rotation angle p in the
 ! config it runs
+! (make combined; make spin_chain runs the chain part alone, kicked_top_spin_chain)
 !   S1  the classical kicked top (Poincare section on a grid and the orbit of
 !       the initial state), with the torsion k of the chain;
 !   S3  the qubit chain, n_q spins 1/2 with all-to-all zz couplings V_il = 1/4,
@@ -17,12 +18,11 @@ program kicked_top_regimes
   use init_mod, only: initial_conditions
   use evolve_mod, only: evolve
   use io_mod, only: write_results
-  use husimi_mod, only: husimi, husimi_norm
   use regimes_config_mod, only: rconfig_t, read_regimes_config, str_len
-  use regimes_io_mod, only: run_dir, write_regimes, write_chain, write_husimi, write_summary
-  use chain_state_mod, only: ferromagnetic_direction, product_coherent_state, dicke_amplitudes
-  use chain_floquet_mod, only: uniform_coupling, zz_energies, flip_qubit, forward_step, backward_step
-  use chain_observables_mod, only: fidelity, site_spins, total_spin
+  use regimes_io_mod, only: run_dir, write_regimes
+  use chain_state_mod, only: ferromagnetic_direction
+  use chain_floquet_mod, only: uniform_coupling, zz_energies
+  use chain_run_mod, only: run_chain
   implicit none
 
   type(rconfig_t) :: cfg
@@ -46,7 +46,7 @@ program kicked_top_regimes
 
   do i = 1, size(cfg%p)
     call run_classical(cfg%p(i), run_dir(cfg, i)//'/classical')
-    call run_chain(cfg%p(i), run_dir(cfg, i)//'/chain')
+    call run_chain(cfg, cfg%p(i), theta0, phi0, e_zz, hus_theta, hus_phi, run_dir(cfg, i)//'/chain', 'kicked_top_regimes')
   end do
 
 contains
@@ -84,55 +84,5 @@ contains
     call evolve(c, s0, orbit)
     call write_results(c, orbit)
   end subroutine run_classical
-
-  ! S3/S4: forward evolution for t_r steps, then (after the optional flip) backward evolution for t_r steps.
-  ! obs(:, t_r) and the Husimi snapshot at t_r are taken before the flip.
-  subroutine run_chain(p, dir)
-    real(wp), intent(in) :: p
-    character(len=*), intent(in) :: dir
-    complex(wp), allocatable :: psi0(:), psi(:)
-    real(wp), allocatable :: obs(:,:), q(:,:)
-    real(wp) :: sig(3, cfg%n_q), j, sym_dev
-    integer :: steps(3), t, l
-
-    j = 0.5_wp*cfg%n_q
-    steps = [0, cfg%t_r, 2*cfg%t_r]
-    allocate(obs(9 + 3*cfg%n_q, 0:2*cfg%t_r), q(size(hus_theta), size(steps)))
-    psi0 = product_coherent_state(cfg%n_q, theta0, phi0)
-    psi = psi0
-    sym_dev = 0.0_wp
-
-    do t = 0, 2*cfg%t_r
-      if (t >= 1 .and. t <= cfg%t_r) call forward_step(psi, cfg%n_q, p, cfg%k, e_zz)
-      if (t == cfg%t_r + 1 .and. cfg%butterfly_effect) call flip_qubit(psi, cfg%i_flip, cfg%flip_axis)
-      if (t > cfg%t_r) call backward_step(psi, cfg%n_q, p, cfg%k, e_zz)
-
-      sig = site_spins(psi, cfg%n_q)
-      obs(1, t) = fidelity(psi0, psi)
-      obs(2, t) = sum(abs(psi)**2)
-      obs(3:9, t) = total_spin(psi, cfg%n_q)
-      obs(10:, t) = [sig(1, :), sig(2, :), sig(3, :)]
-
-      do l = 1, size(steps)
-        if (t == steps(l)) then
-          sym_dev = max(sym_dev, abs(1.0_wp - sum(abs(dicke_amplitudes(psi, cfg%n_q))**2)))
-          call husimi(dicke_amplitudes(psi, cfg%n_q), j, hus_theta, hus_phi, q(:, l))
-        end if
-      end do
-    end do
-
-    call make_dir(dir)
-    call write_chain(cfg, p, dir, obs)
-    call write_husimi(cfg, p, dir, steps, hus_theta, hus_phi, q)
-    call write_summary(cfg, p, dir, &
-      [character(len=24) :: 'F(t_r)', 'F(2t_r)', 'max|norm-1|', 'max|S^2-j(j+1)|', &
-       'max(1-symmetric_weight)', 'husimi_norm(0)', 'husimi_norm(t_r)', 'husimi_norm(2t_r)'], &
-      [obs(1, cfg%t_r), obs(1, 2*cfg%t_r), maxval(abs(obs(2, :) - 1.0_wp)), &
-       maxval(abs(obs(9, :) - j*(j + 1.0_wp))), sym_dev, &
-       husimi_norm(q(:, 1), j), husimi_norm(q(:, 2), j), husimi_norm(q(:, 3), j)])
-
-    write(*, '(a,f0.4,a,f0.4,a,es10.3,a)') 'kicked_top_regimes: p = ', p, ', k = ', cfg%k, &
-      ', F(2t_r) - 1 = ', obs(1, 2*cfg%t_r) - 1.0_wp, ' -> '//dir
-  end subroutine run_chain
 
 end program kicked_top_regimes

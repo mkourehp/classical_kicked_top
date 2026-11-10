@@ -224,6 +224,7 @@ __marimo__/
 build/
 output/
 output_regimes/
+output_spin_chain/
 
 # Reports
 docs/*/figures/data/

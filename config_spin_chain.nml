@@ -1,0 +1,33 @@
+! Qubit chain alone (kicked_top_spin_chain, make spin_chain); kicked_top_regimes reads the same
+! groups plus &classical (config_regimes.nml).
+! The chain has n_q qubits, J = (1/2) sum_i sigma_i, j = n_q/2:
+! H = k/(2j) sum_{i,l} V_il sigma^z_i sigma^z_l + p J_y sum_n delta(t-n), V_il = 1/4 (H_zz = J_z^2),
+! U = exp(-i k/(2j) H_zz) exp(-i p J_y).
+
+&system
+  n_q = 10                 ! number of qubits, j = n_q/2
+  k   = 20.0               ! torsion strength per period
+  p   = 0.02, 0.1, 1.0     ! kick angles about y, one run per value: regular, mixed, chaotic (for k = 20)
+/
+
+&initial
+  s0  = -1                 ! -1: all qubits up, 0: all down (only ferromagnetic states)
+  pol = 'z'                ! axis of the polarisation: 'z', 'x' or 'y'
+/
+
+
+&chain
+  t_r = 30                 ! forward steps before the time reversal (then t_r backward steps)
+  butterfly_effect = .true. ! flip qubit i_flip at t_r, before the backward leg
+  i_flip = 1               ! index (1 .. n_q) of the flipped qubit
+  flip_axis = 'x'          ! the flip is sigma^a on qubit i_flip, a = 'x', 'y' or 'z'
+/
+
+&husimi
+  n_theta = 100            ! grid points in Z
+  n_phi   = 200            ! grid points in phi
+/
+
+&output
+  out_dir = 'output_spin_chain'
+/

@@ -1347,8 +1347,8 @@ per initial condition.
 \subsection{Building and running}
 
 \begin{lstlisting}[language=bash, numbers=none]
-make                                   # build/kicked_top
-./build/kicked_top config.nml          # or: make run
+make                                   # build all programs in build/
+make classical                         # build and run ./build/kicked_top config_classical.nml
 python scripts/post_processor.py       # output/phase_space.png
 python scripts/post_processor.py --sphere --show
 python scripts/post_processor.py --lyapunov    # output/lyapunov.png
