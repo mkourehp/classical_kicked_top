@@ -18,7 +18,7 @@ module chain_floquet_mod
   use kinds_mod, only: wp, two_pi
   implicit none
   private
-  public :: uniform_coupling, zz_energies, zz_coupling, rotate_y, flip_qubit, forward_step, backward_step
+  public :: uniform_coupling, zz_energies, zz_coupling, rotate_y, rotate_qubit, forward_step, backward_step
 
 contains
 
@@ -92,18 +92,23 @@ contains
     end do
   end subroutine rotate_y
 
-  ! Spin flip of qubit i (1 .. n_q): psi -> sigma^a_i psi, a = axis ('x', 'y' or 'z'),
-  ! a pi rotation of qubit i about a (up to a global phase). It reverses the
-  ! components of the qubit perpendicular to a. In the basis (up, down):
-  ! sigma^x = [[0, 1], [1, 0]], sigma^y = [[0, -i], [i, 0]], sigma^z = [[1, 0], [0, -1]].
-  subroutine flip_qubit(psi, i, axis)
+  ! Rotation of qubit i (1 .. n_q) about a = axis ('x', 'y' or 'z') by theta:
+  ! psi -> exp(-i theta/2 sigma^a_i) psi. theta = pi is the spin flip sigma^a_i
+  ! (up to the global phase -i). With c = cos(theta/2), s = sin(theta/2), in the
+  ! basis (up, down): x: [[c, -i s], [-i s, c]], y: [[c, -s], [s, c]],
+  ! z: diag(exp(-i theta/2), exp(+i theta/2)).
+  subroutine rotate_qubit(psi, i, axis, theta)
     complex(wp), intent(inout) :: psi(0:)
     integer, intent(in) :: i
     character(len=1), intent(in) :: axis
+    real(wp), intent(in) :: theta
     complex(wp), parameter :: im = (0.0_wp, 1.0_wp)
+    real(wp) :: c, s
     complex(wp) :: a_up, a_dn
     integer :: b, mask
 
+    c = cos(theta/2.0_wp)
+    s = sin(theta/2.0_wp)
     mask = ishft(1, i - 1)
     !$omp parallel do private(a_up, a_dn) schedule(static)
     do b = 0, size(psi) - 1
@@ -112,17 +117,18 @@ contains
       a_up = psi(ior(b, mask))
       select case (axis)
       case ('x')
-        psi(ior(b, mask)) = a_dn
-        psi(b) = a_up
+        psi(ior(b, mask)) = c*a_up - im*s*a_dn
+        psi(b) = -im*s*a_up + c*a_dn
       case ('y')
-        psi(ior(b, mask)) = -im*a_dn
-        psi(b) = im*a_up
+        psi(ior(b, mask)) = c*a_up - s*a_dn
+        psi(b) = s*a_up + c*a_dn
       case default
-        psi(b) = -a_dn
+        psi(ior(b, mask)) = cmplx(c, -s, wp)*a_up
+        psi(b) = cmplx(c, s, wp)*a_dn
       end select
     end do
     !$omp end parallel do
-  end subroutine flip_qubit
+  end subroutine rotate_qubit
 
   ! One period: U = exp(-i (k/(2j)) H_zz) exp(-i p J_y), j = n_q/2
   ! (first the kick, then the couplings for one period).

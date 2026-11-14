@@ -8,7 +8,8 @@
 !       snapshots (S2);
 !   S4  time reversal of the chain: t_r forward steps U, then t_r backward
 !       steps U^dagger (coupling 2 pi - k/(2j), kick -p); with butterfly_effect
-!       sigma^a (a = flip_axis) acts on qubit i_flip at t_r, before the backward leg.
+!       qubit i_flip is rotated about a = flip_axis by flip_angle
+!       (exp(-i flip_angle/2 sigma^a), pi = flip sigma^a) at t_r, before the backward leg.
 ! Usage: kicked_top_combined [namelist file]   (default config_combined.nml)
 program kicked_top_combined
   use kinds_mod, only: wp
