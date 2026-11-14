@@ -1,0 +1,650 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric}
+\usepackage[colorlinks=true,linkcolor=blue!60!black,citecolor=blue!60!black,urlcolor=blue!60!black]{hyperref}
+\usepackage{cleveref}
+\usepackage[section]{placeins}
+
+\newtheorem*{theorem*}{Theorem}
+\newcommand{\vs}{\bm{s}}
+\newcommand{\vJ}{\bm{J}}
+\newcommand{\vS}{\bm{S}}
+\newcommand{\vn}{\hat{\bm n}}
+\newcommand{\PB}[2]{\{#1,#2\}}
+\newcommand{\Tr}{\operatorname{Tr}}
+\newcommand{\up}{{\uparrow}}
+\newcommand{\dn}{{\downarrow}}
+\emergencystretch=3em
+
+\lstdefinestyle{fortran}{
+  language=[08]Fortran, basicstyle=\ttfamily\small, keywordstyle=\color{blue!60!black}\bfseries,
+  commentstyle=\color{green!40!black}\itshape, numbers=left, numberstyle=\tiny\color{gray},
+  frame=single, framerule=0.3pt, rulecolor=\color{gray!60}, breaklines=true, columns=fullflexible}
+\lstdefinestyle{python}{
+  language=Python, basicstyle=\ttfamily\small, keywordstyle=\color{blue!60!black}\bfseries,
+  commentstyle=\color{green!40!black}\itshape, numbers=left, numberstyle=\tiny\color{gray},
+  frame=single, framerule=0.3pt, rulecolor=\color{gray!60}, breaklines=true, columns=fullflexible}
+\lstset{style=fortran}
+
+\title{The Husimi Function of the Kicked Top\\[0.3em]
+  \large Spin coherent states, the phase-space picture of a quantum spin and of a qubit chain,\\
+  and how the \texttt{classical\_kicked\_top} code computes it}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The Husimi function $Q(\theta,\phi)$ turns a quantum spin state ($2j+1$ complex amplitudes) into a picture on the
+classical phase-space sphere, so quantum and classical kicked-top dynamics can be compared on one plot. We build $Q$
+from scratch for a single spin and for a chain of $n_q$ qubits, link each result to the Fortran routine that
+implements it, and write out all algebra.
+\end{abstract}
+
+{\setcounter{tocdepth}{1}\tableofcontents}
+
+%=====================================================================
+\section*{Notation}
+%=====================================================================
+
+We use units with $\hbar = 1$. The polar angle $\theta\in[0,\pi]$ is measured from the $z$ axis, the azimuth
+$\phi\in[-\pi,\pi)$ around it, and
+\begin{equation}\label{eq:unit}
+  \vn(\theta,\phi) = \vs = (X, Y, Z) = (\sin\theta\cos\phi,\ \sin\theta\sin\phi,\ \cos\theta), \qquad Z = \cos\theta,
+\end{equation}
+is the unit vector in that direction. A hat on a bold symbol always means a unit vector: $\hat{\bm x}=(1,0,0)$,
+$\hat{\bm y}=(0,1,0)$, $\hat{\bm z}=(0,0,1)$, and $\vn,\vn',\vn_0$ are directions on the sphere. Quantum operators carry
+\emph{no} hat. The spin operators $\vJ = (J_x,J_y,J_z)$ satisfy
+\begin{equation}\label{eq:comm}
+  [J_a, J_b] = i\,\epsilon_{abc}\,J_c ,
+\end{equation}
+where $[A,B] = AB-BA$, $i$ is the imaginary unit, $a,b,c\in\{x,y,z\}$, $c$ is summed over, and $\epsilon_{abc}$ is the
+Levi-Civita symbol ($\epsilon_{xyz}=\epsilon_{yzx}=\epsilon_{zxy}=1$, $\epsilon_{xzy}=\epsilon_{zyx}=\epsilon_{yxz}=-1$,
+zero if two indices are equal). For spin $j$ ($j = \frac12, 1, \frac32,\dots$) the basis states $|j,m\rangle$,
+$m = j, j-1,\dots,-j$, satisfy $\vJ^2|j,m\rangle = j(j+1)|j,m\rangle$, $J_z|j,m\rangle = m|j,m\rangle$, and with
+the ladder operators $J_\pm = J_x \pm iJ_y$
+\begin{equation}\label{eq:ladder}
+  J_+|j,m\rangle = a(m)\,|j,m+1\rangle,\quad J_-|j,m\rangle = a(m-1)\,|j,m-1\rangle,\quad a(m) = \sqrt{j(j+1)-m(m+1)} .
+\end{equation}
+A state is $|\psi\rangle = \sum_m \psi_m|j,m\rangle$. In the code (\texttt{spin\_mod}) $\psi_m$ is stored at array
+index $i = 1,\dots,2j+1$ with $m = j-(i-1)$. $\binom{n}{r} = \frac{n!}{r!\,(n-r)!}$ is the binomial coefficient.
+The kicked top has the Hamiltonian and the one-period (Floquet) operator, sampled just before each kick,
+\begin{equation}\label{eq:H}
+  H(t) = \frac{k}{2j}\,J_z^2 + p\,J_y\sum_{n=-\infty}^{\infty}\delta(t-n),\qquad
+  U = e^{-i\frac{k}{2j}J_z^2}\,e^{-ipJ_y},
+\end{equation}
+with torsion strength $k$ and kick angle $p$; $|\psi_n\rangle = U^n|\psi_0\rangle$ is the state after $n$ kicks.
+The rotation matrices about $z$ and $y$ (counter-clockwise by the right-hand rule) are
+\begin{equation}\label{eq:rot}
+  R_z(\alpha) = \begin{pmatrix} \cos\alpha & -\sin\alpha & 0\\ \sin\alpha & \cos\alpha & 0 \\ 0 & 0 & 1 \end{pmatrix},
+  \qquad
+  R_y(\alpha) = \begin{pmatrix} \cos\alpha & 0 & \sin\alpha\\ 0 & 1 & 0 \\ -\sin\alpha & 0 & \cos\alpha \end{pmatrix}.
+\end{equation}
+
+%=====================================================================
+\section{Motivation: a phase-space picture for a quantum spin}\label{sec:motivation}
+%=====================================================================
+
+\paragraph{The classical phase space is a sphere.} Classically, the kicked top is a vector $\vJ$ of fixed length $j$;
+only its direction $\vs = \vJ/j$ changes. The phase space is therefore the unit sphere \eqref{eq:unit}. A canonical
+pair of coordinates on it is $(q,p_{\rm can}) = (\phi, J_z)$, or after dividing by $j$, $(\phi,Z)$. To check this,
+write $J_x = R\cos\phi$, $J_y = R\sin\phi$ with $R = \sqrt{j^2-J_z^2}$ (so $\partial R/\partial J_z = -J_z/R$) and use
+the canonical bracket $\PB{A}{B} = \partial_\phi A\,\partial_{J_z}B - \partial_{J_z}A\,\partial_\phi B$:
+\begin{equation*}
+  \PB{J_x}{J_y} = (-R\sin\phi)\Big(-\frac{J_z}{R}\sin\phi\Big) - \Big(-\frac{J_z}{R}\cos\phi\Big)(R\cos\phi)
+  = J_z(\sin^2\phi + \cos^2\phi) = J_z ,
+\end{equation*}
+and in the same way $\PB{J_y}{J_z} = J_x$, $\PB{J_z}{J_x} = J_y$. These are the classical angular-momentum brackets, so
+$(\phi,J_z)$ is canonical.
+
+\paragraph{Phase-space area equals geometric area.} The Liouville (phase-space) area element in canonical coordinates
+is $d\phi\,dJ_z = j\,d\phi\,dZ$. The geometric area element of the unit sphere is $\sin\theta\,d\theta\,d\phi$. Since
+$Z = \cos\theta$, $dZ = -\sin\theta\,d\theta$, and so (orienting the $Z$ integral from $-1$ to $1$)
+\begin{equation}\label{eq:area}
+  d\Omega \equiv \sin\theta\,d\theta\,d\phi = d\phi\,dZ, \qquad \int d\Omega = \int_{-\pi}^{\pi}\!d\phi\int_{-1}^{1}\!dZ = 4\pi .
+\end{equation}
+Equal areas in the $(\phi,Z)$ plane are equal areas on the sphere (Archimedes' ``hat-box'' theorem). This is the
+argument behind \texttt{equal\_area\_grid} in \texttt{src/common/sphere\_mod.f90}: a grid that is uniform in
+$(\phi,Z)$ has cells of equal area on the sphere (\cref{sec:numerics}). The classical map conserves this area
+(Liouville's theorem), so a cloud of classical points keeps its area while it is stretched and folded.
+
+\paragraph{Why a quantum phase-space picture is needed.} A quantum state of the top is a vector of $2j+1$ amplitudes
+$\psi_m$. The numbers $|\psi_m|^2$ give the probability distribution of $J_z$ only, i.e.\ of one coordinate ($Z = m/j$);
+the information about $\phi$ sits in the relative phases of the $\psi_m$ and is invisible in $|\psi_m|^2$. A quantum
+state also cannot be a point: by \eqref{eq:comm} the three components of $\vJ$ cannot all be sharp. What we want is a
+non-negative function on the sphere, normalised like a probability density, that (i) is concentrated near $\vn$ for a
+state ``pointing'' along $\vn$, (ii) is plotted on the same $(\phi,Z)$ axes as the classical phase portraits, and
+(iii) can be computed cheaply from the $\psi_m$. The Husimi function does all three. Its building block is the quantum
+state that is as close as possible to a point of the sphere: the spin coherent state.
+
+%=====================================================================
+\section{Spin coherent states}\label{sec:coherent}
+%=====================================================================
+
+\subsection{Spin \texorpdfstring{$j$}{j} as \texorpdfstring{$2j$}{2j} spins \texorpdfstring{$\frac12$}{1/2}}\label{sec:two-j}
+
+Take $n = 2j$ spins $\frac12$ (qubits) with Pauli matrices $\sigma^a_i$ for qubit $i$; in the basis $(|\up\rangle,
+|\dn\rangle)$
+\begin{equation}\label{eq:pauli}
+  \sigma^x = \begin{pmatrix}0&1\\1&0\end{pmatrix},\quad
+  \sigma^y = \begin{pmatrix}0&-i\\i&0\end{pmatrix},\quad
+  \sigma^z = \begin{pmatrix}1&0\\0&-1\end{pmatrix},
+  \qquad\text{e.g. } \sigma^y|\up\rangle = i|\dn\rangle,\ \sigma^y|\dn\rangle = -i|\up\rangle .
+\end{equation}
+The collective spin $\vS = \frac12\sum_{i=1}^{n}\bm\sigma_i$ satisfies \eqref{eq:comm}, because operators of different
+qubits commute and $[\sigma^a_i/2,\sigma^b_i/2] = i\epsilon_{abc}\sigma^c_i/2$.
+A product basis state with $u$ qubits up and $n-u$ down has $S_z = \frac12(u - (n-u)) = u - \frac n2$. Define the
+\emph{Dicke state} as the normalised equal-weight sum of all $\binom{n}{u}$ such product states,
+\begin{equation}\label{eq:dicke-abstract}
+  |D_u\rangle = \binom{n}{u}^{-1/2}\sum_{\text{$u$ up}}|\cdots\rangle ,\qquad S_z|D_u\rangle = \Big(u-\frac n2\Big)|D_u\rangle .
+\end{equation}
+It is symmetric under every permutation of the qubits. We now show that $|D_u\rangle = |j,m\rangle$ with $j = n/2$ and
+$m = u - j$, including the phases of \eqref{eq:ladder}.
+
+\emph{Step 1.} The all-up state $|D_n\rangle = |\up\up\cdots\up\rangle$ has $S_z = n/2 = j$, the largest possible
+value, and $S_+ = \sum_i\sigma^+_i$ (with $\sigma^+ = |\up\rangle\langle\dn|$) annihilates it. So it is $|j,j\rangle$.
+
+\emph{Step 2.} $S_- = \sum_i \sigma^-_i$ with $\sigma^- = |\dn\rangle\langle\up|$ turns one up qubit down. Acting on
+$|D_u\rangle$, every one of its $\binom nu$ terms produces $u$ terms with $u-1$ up qubits. A given product state with
+$u-1$ up qubits is produced from each of the states obtained by turning one of its $n-u+1$ down qubits up, i.e.\
+$n-u+1$ times. Therefore
+\begin{equation*}
+  S_-|D_u\rangle = \binom nu^{-1/2}(n-u+1)\sum_{\text{$u-1$ up}}|\cdots\rangle
+  = (n-u+1)\binom nu^{-1/2}\binom{n}{u-1}^{1/2}|D_{u-1}\rangle .
+\end{equation*}
+With $\binom{n}{u-1}\big/\binom nu = \frac{u!\,(n-u)!}{(u-1)!\,(n-u+1)!} = \frac{u}{n-u+1}$ the coefficient is
+$\sqrt{u\,(n-u+1)}$. Inserting $u = j+m$ and $n-u+1 = j-m+1$,
+\begin{equation*}
+  S_-|D_u\rangle = \sqrt{(j+m)(j-m+1)}\;|D_{u-1}\rangle = \sqrt{j(j+1)-m(m-1)}\;|D_{u-1}\rangle = a(m-1)\,|D_{u-1}\rangle ,
+\end{equation*}
+which is exactly $J_-|j,m\rangle = a(m-1)|j,m-1\rangle$ of \eqref{eq:ladder}. Starting from Step 1 and applying $S_-$
+repeatedly, $|D_u\rangle = |j,u-j\rangle$ for all $u$. The $2j+1$ Dicke states span the \emph{symmetric subspace} and in
+it $\vS$ acts as the spin-$j$ operator $\vJ$. In the rest of this section we write $\vJ$ for $\vS$.
+
+\subsection{Rotating the spin operators}\label{sec:rotation}
+
+We will need how a rotation operator acts on $\vJ$. Let $F(\alpha) = e^{i\alpha J_z}J_xe^{-i\alpha J_z}$ and
+$G(\alpha) = e^{i\alpha J_z}J_ye^{-i\alpha J_z}$. Differentiating and using \eqref{eq:comm},
+\begin{equation*}
+  F' = e^{i\alpha J_z}\,i[J_z,J_x]\,e^{-i\alpha J_z} = e^{i\alpha J_z}\,i(iJ_y)\,e^{-i\alpha J_z} = -G,\qquad
+  G' = e^{i\alpha J_z}\,i(-iJ_x)\,e^{-i\alpha J_z} = F,
+\end{equation*}
+with $F(0) = J_x$, $G(0) = J_y$. The solution is $F = J_x\cos\alpha - J_y\sin\alpha$, $G = J_x\sin\alpha +
+J_y\cos\alpha$ (check: $F' = -J_x\sin\alpha - J_y\cos\alpha = -G$, $G' = J_x\cos\alpha - J_y\sin\alpha = F$), while
+$J_z$ commutes with $e^{i\alpha J_z}$. Comparing with \eqref{eq:rot}, and repeating the same steps for $J_y$ (where
+$i[J_y,J_z] = -J_x$ and $i[J_y,J_x] = J_z$),
+\begin{equation}\label{eq:rot-J}
+  e^{i\alpha J_z}J_a\,e^{-i\alpha J_z} = \sum_b R_z(\alpha)_{ab}\,J_b ,\qquad
+  e^{i\alpha J_y}J_a\,e^{-i\alpha J_y} = \sum_b R_y(\alpha)_{ab}\,J_b .
+\end{equation}
+For $D(\theta,\phi) = e^{-i\phi J_z}e^{-i\theta J_y}$ we apply the two identities one after the other:
+\begin{equation}\label{eq:rot-D}
+  D^\dagger J_a D = e^{i\theta J_y}\big(e^{i\phi J_z}J_ae^{-i\phi J_z}\big)e^{-i\theta J_y}
+  = \sum_b R_z(\phi)_{ab}\,e^{i\theta J_y}J_be^{-i\theta J_y} = \sum_{c} \mathcal R_{ac}\,J_c ,
+\end{equation}
+with $\mathcal R = R_z(\phi)R_y(\theta)$. This matrix carries $\hat{\bm z}$ to $\vn$: $R_y(\theta)\hat{\bm z} = (\sin\theta,0,\cos\theta)$ (third
+column of $R_y$) and $R_z(\phi)$ turns this into $(\sin\theta\cos\phi,\sin\theta\sin\phi,\cos\theta) = \vn$.
+For a fixed vector $\bm e$, \eqref{eq:rot-D} gives $D^\dagger(\bm e\cdot\vJ)D = \sum_{a,c}e_a\mathcal R_{ac}J_c =
+(\mathcal R^{\mathsf T}\bm e)\cdot\vJ$, where $^{\mathsf T}$ is the transpose and $\mathcal R^{\mathsf T} = \mathcal
+R^{-1}$.
+
+\subsection{Definition and amplitudes}\label{sec:amplitudes}
+
+The state $|j,j\rangle$ points along $+\hat{\bm z}$. Rotating it to $\vn(\theta,\phi)$ defines the spin coherent state
+\begin{equation}\label{eq:coh-def}
+  |\theta,\phi\rangle \equiv |\vn\rangle = D(\theta,\phi)\,|j,j\rangle = e^{-i\phi J_z}\,e^{-i\theta J_y}\,|j,j\rangle .
+\end{equation}
+To find its amplitudes we use \cref{sec:two-j}. Since $J_y = \frac12\sum_i\sigma^y_i$ is a sum of commuting terms,
+$e^{-i\theta J_y} = \prod_i e^{-i\theta\sigma^y_i/2}$, and the same for $J_z$. For one qubit, $(\sigma^y)^2 = 1$
+splits the exponential series into even and odd powers,
+\begin{equation*}
+  e^{-i\theta\sigma^y/2} = \sum_{r}\frac{(-i\theta/2)^r}{r!}(\sigma^y)^r = \cos\frac\theta2 - i\sin\frac\theta2\,\sigma^y,
+\end{equation*}
+\begin{equation*}
+  e^{-i\theta\sigma^y/2}|\up\rangle = \cos\frac\theta2|\up\rangle - i\sin\frac\theta2\,(i|\dn\rangle)
+  = \cos\frac\theta2|\up\rangle + \sin\frac\theta2|\dn\rangle ,
+\end{equation*}
+and $e^{-i\phi\sigma^z/2}$ multiplies $|\up\rangle$ by $e^{-i\phi/2}$ and $|\dn\rangle$ by $e^{+i\phi/2}$. Hence each
+qubit ends up in the single-qubit coherent state
+\begin{equation}\label{eq:qubit-coh}
+  |\vn\rangle_1 = \alpha|\up\rangle + \beta|\dn\rangle,\qquad
+  \alpha = \cos\frac\theta2\,e^{-i\phi/2},\quad \beta = \sin\frac\theta2\,e^{i\phi/2},
+\end{equation}
+and the spin coherent state is the product state $|\vn\rangle = |\vn\rangle_1^{\otimes 2j}$. Expanding the product,
+a product basis state with $u$ qubits up gets the amplitude $\alpha^u\beta^{2j-u}$, which depends only on $u$. With
+$u = j+m$ and $2j-u = j-m$,
+\begin{equation*}
+  \alpha^{j+m}\beta^{j-m} = \cos^{j+m}\!\frac\theta2\,\sin^{j-m}\!\frac\theta2\;e^{-i\phi[(j+m)-(j-m)]/2}
+  = \cos^{j+m}\!\frac\theta2\,\sin^{j-m}\!\frac\theta2\;e^{-im\phi}.
+\end{equation*}
+All $\binom{2j}{j+m}$ product states with $u = j+m$ have this amplitude, so their sum is $\binom{2j}{j+m}^{1/2}|j,m\rangle$
+by \eqref{eq:dicke-abstract}. Using $\binom{2j}{j+m} = \binom{2j}{j-m}$,
+\begin{equation}\label{eq:coherent}
+  \boxed{|\theta,\phi\rangle = \sum_{m=-j}^{j} c_m(\theta,\phi)\,|j,m\rangle,\qquad
+  c_m(\theta,\phi) = \sqrt{\binom{2j}{j-m}}\;\cos^{j+m}\!\frac{\theta}{2}\;\sin^{j-m}\!\frac{\theta}{2}\;e^{-im\phi} .}
+\end{equation}
+This is the formula of \texttt{coherent\_state} in \texttt{src/quantum/spin\_mod.f90} (and eq.\ [eq:coherent] of
+\texttt{docs/lecture\_note/kicked\_top\_notes.tex}). With the phases of \eqref{eq:qubit-coh} no overall phase has to be
+dropped.
+
+\paragraph{Normalisation.} By the binomial theorem $(x+y)^{n} = \sum_{r=0}^n\binom nr x^{n-r}y^r$ with $r = j-m$,
+$n = 2j$, $x = \cos^2\frac\theta2$, $y = \sin^2\frac\theta2$:
+\begin{equation}\label{eq:coh-norm}
+  \sum_m |c_m|^2 = \sum_{r=0}^{2j}\binom{2j}{r}\Big(\cos^2\frac\theta2\Big)^{2j-r}\Big(\sin^2\frac\theta2\Big)^{r}
+  = \Big(\cos^2\frac\theta2 + \sin^2\frac\theta2\Big)^{2j} = 1 .
+\end{equation}
+
+\paragraph{Mean spin.} In $|j,j\rangle$, $\langle J_z\rangle = j$ and $\langle J_x\rangle = \langle J_y\rangle = 0$
+($J_x$ and $J_y$ are combinations of $J_\pm$, which change $m$, so their diagonal elements vanish). With
+\eqref{eq:rot-D},
+\begin{equation}\label{eq:coh-mean}
+  \langle\vn|J_a|\vn\rangle = \langle j,j|D^\dagger J_aD|j,j\rangle = \sum_c\mathcal R_{ac}\langle j,j|J_c|j,j\rangle
+  = j\,\mathcal R_{az} = j\,\hat n_a ,
+  \quad\text{i.e.}\quad \langle\vJ\rangle = j\,\vn .
+\end{equation}
+
+\paragraph{Transverse width.} In $|j,j\rangle$, write $J_x = \frac12(J_++J_-)$, so $J_x^2 = \frac14(J_+^2 + J_-^2 +
+J_+J_- + J_-J_+)$. $J_\pm^2$ change $m$ by $\pm2$ and have zero diagonal elements; $J_+|j,j\rangle = 0$; and
+$J_+J_-|j,j\rangle = J_+\,a(j-1)|j,j-1\rangle = a(j-1)^2|j,j\rangle = 2j\,|j,j\rangle$. Hence $\langle J_x^2\rangle =
+\frac{2j}{4} = \frac j2$, and in the same way $\langle J_y^2\rangle = \frac j2$ (check: $\langle J_x^2 + J_y^2\rangle =
+\langle\vJ^2 - J_z^2\rangle = j(j+1)-j^2 = j$). Take the unit vectors $\bm e_1 = \mathcal R\hat{\bm x}$ and $\bm e_2 =
+\mathcal R\hat{\bm y}$ perpendicular to $\vn$. By the last line of \cref{sec:rotation}, $D^\dagger(\bm e_1\cdot\vJ)D =
+(\mathcal R^{\mathsf T}\mathcal R\hat{\bm x})\cdot\vJ = J_x$, so in the coherent state
+\begin{equation}\label{eq:coh-width}
+  \langle \bm e_1\cdot\vJ\rangle = 0,\qquad \Delta(\bm e_1\cdot\vJ) = \sqrt{\langle J_x^2\rangle_{jj}} = \sqrt{j/2},
+  \qquad \Delta(\bm e_1\cdot\vs) = \frac{\sqrt{j/2}}{j} = \frac{1}{\sqrt{2j}} ,
+\end{equation}
+and the same for $\bm e_2$. The scaled spin $\vs = \vJ/j$ is spread over a patch of radius $\sim 1/\sqrt{2j}$ around
+$\vn$. The product $\Delta J_x\Delta J_y = j/2 = |\langle J_z\rangle|/2$ in $|j,j\rangle$ saturates the uncertainty
+relation $\Delta J_x\Delta J_y\ge\frac12|\langle[J_x,J_y]\rangle|$: a coherent state is a minimum-uncertainty state.
+
+\paragraph{Overlap of two coherent states.} Both $|\vn\rangle$ and $|\vn'\rangle$ are products of $2j$ identical
+qubit states, and the inner product of product states is the product of the inner products:
+$\langle\vn|\vn'\rangle = (\langle\vn|\vn'\rangle_1)^{2j}$. For one qubit in \eqref{eq:qubit-coh}, using
+\eqref{eq:pauli},
+\begin{equation*}
+  \langle\sigma^z\rangle = |\alpha|^2-|\beta|^2 = \cos\theta,\quad
+  \langle\sigma^x\rangle = \alpha^*\beta+\beta^*\alpha = 2\,\mathrm{Re}(\alpha^*\beta),\quad
+  \langle\sigma^y\rangle = -i\alpha^*\beta + i\beta^*\alpha = 2\,\mathrm{Im}(\alpha^*\beta),
+\end{equation*}
+and $\alpha^*\beta = \cos\frac\theta2\sin\frac\theta2\,e^{i\phi} = \frac12\sin\theta\,e^{i\phi}$, so $\langle\bm\sigma
+\rangle = \vn$. Any $2\times2$ Hermitian matrix $\rho$ with $\Tr\rho = 1$ can be written $\rho = \frac12(1 + \bm
+r\cdot\bm\sigma)$, and $\Tr(\sigma^a\sigma^b) = 2\delta_{ab}$, $\Tr\sigma^a = 0$ give $r_a = \Tr(\rho\sigma^a)$. For
+$\rho = |\vn\rangle_1\langle\vn|$ this is $r_a = \langle\sigma^a\rangle = \hat n_a$. Then
+\begin{equation*}
+  |\langle\vn|\vn'\rangle_1|^2 = \Tr(\rho\rho') = \frac14\Tr\big[(1+\vn\cdot\bm\sigma)(1+\vn'\cdot\bm\sigma)\big]
+  = \frac14\big(2 + 2\,\vn\cdot\vn'\big) = \frac{1+\vn\cdot\vn'}{2},
+\end{equation*}
+and raising to the power $2j$,
+\begin{equation}\label{eq:overlap}
+  \boxed{|\langle\vn|\vn'\rangle|^2 = \Big(\frac{1+\vn\cdot\vn'}{2}\Big)^{2j} = \cos^{4j}\frac\gamma2 ,}
+  \qquad \cos\gamma = \vn\cdot\vn' ,
+\end{equation}
+with $\gamma$ the angle between the two directions, using $\frac{1+\cos\gamma}{2} = \cos^2\frac\gamma2$. Check with
+\eqref{eq:coherent}: for $\vn = \hat{\bm z}$, $|\vn\rangle = |j,j\rangle$ and $|\langle j,j|\vn'\rangle|^2 =
+|c_j(\theta',\phi')|^2 = \cos^{4j}\frac{\theta'}{2}$, the same as \eqref{eq:overlap} with $\gamma = \theta'$.
+Coherent states are not orthogonal; their overlap falls off over an angle $\gamma\sim1/\sqrt j$ (\cref{sec:examples}).
+
+%=====================================================================
+\section{The Husimi function of the kicked top}\label{sec:husimi}
+%=====================================================================
+
+\subsection{Definition}
+
+The Husimi function of a normalised state $|\psi\rangle$ is the probability of finding it in the coherent state
+$|\theta,\phi\rangle$:
+\begin{equation}\label{eq:Q}
+  \boxed{Q(\theta,\phi) = |\langle\theta,\phi|\psi\rangle|^2
+  = \Big|\sum_m c_m^*(\theta,\phi)\,\psi_m\Big|^2
+  = \Big|\sum_m \sqrt{\tbinom{2j}{j-m}}\cos^{j+m}\!\tfrac{\theta}{2}\sin^{j-m}\!\tfrac{\theta}{2}\,e^{im\phi}\,\psi_m\Big|^2 .}
+\end{equation}
+By the Cauchy--Schwarz inequality $|\langle\vn|\psi\rangle|^2\le\langle\vn|\vn\rangle\langle\psi|\psi\rangle = 1$, so
+$0\le Q\le1$. For the kicked top, $Q_n$ is \eqref{eq:Q} for $|\psi_n\rangle = U^n|\psi_0\rangle$ of \eqref{eq:H}; the
+quantum program evaluates it at the kicks listed in \texttt{husimi\_kicks}.
+
+\subsection{Resolution of the identity}\label{sec:resolution}
+
+\begin{theorem*}
+\begin{equation}\label{eq:resolution}
+  A \equiv \frac{2j+1}{4\pi}\int |\theta,\phi\rangle\langle\theta,\phi|\;d\Omega = 1 ,\qquad d\Omega = d\phi\,dZ .
+\end{equation}
+\end{theorem*}
+\begin{proof}
+\emph{(a) $A$ commutes with $J_z$.} From \eqref{eq:coh-def}, $e^{-i\alpha J_z}|\theta,\phi\rangle = |\theta,\phi+\alpha
+\rangle$. Hence $e^{-i\alpha J_z}Ae^{i\alpha J_z} = \frac{2j+1}{4\pi}\int|\theta,\phi+\alpha\rangle\langle\theta,
+\phi+\alpha|\,d\phi\,dZ = A$, because the integrand is $2\pi$-periodic in $\phi$ (for half-integer $j$,
+$|\theta,\phi+2\pi\rangle = -|\theta,\phi\rangle$, and the sign cancels in $|\cdot\rangle\langle\cdot|$). Taking
+$d/d\alpha$ at $\alpha = 0$ gives $-i[J_z,A] = 0$.
+
+\emph{(b) $A$ commutes with $J_y$.} First, $|\vn\rangle$ is the eigenvector of $\vn\cdot\vJ$ with the largest
+eigenvalue $j$: by \cref{sec:rotation}, $D^\dagger(\vn\cdot\vJ)D = (\mathcal R^{\mathsf T}\vn)\cdot\vJ = \hat{\bm z}
+\cdot\vJ = J_z$, so $(\vn\cdot\vJ)D|j,j\rangle = DJ_z|j,j\rangle = j\,D|j,j\rangle$. This eigenvalue is
+non-degenerate, since $\vn\cdot\vJ = DJ_zD^\dagger$ has the same eigenvalues $j,\dots,-j$ as $J_z$. Now let
+$V = e^{-i\beta J_y}$ and $\vn' = R_y(\beta)\vn$. By \eqref{eq:rot-J}, $V^\dagger(\vn'\cdot\vJ)V = (R_y(\beta)^{\mathsf
+T}\vn')\cdot\vJ = \vn\cdot\vJ$, so $(\vn'\cdot\vJ)V|\vn\rangle = V(\vn\cdot\vJ)|\vn\rangle = j\,V|\vn\rangle$: $V|\vn
+\rangle$ is the eigenvector of $\vn'\cdot\vJ$ with eigenvalue $j$, i.e.\ $|\vn'\rangle$ up to a phase, which cancels in
+$V|\vn\rangle\langle\vn|V^\dagger = |\vn'\rangle\langle\vn'|$. A rotation maps the sphere onto itself and preserves
+areas, so the change of variables $\vn\to\vn'$ leaves $d\Omega$ unchanged and $VAV^\dagger = A$. Differentiating in
+$\beta$ at $0$ gives $[J_y,A] = 0$.
+
+\emph{(c) Schur's lemma for spin $j$.} From (a) and (b), $A$ also commutes with $J_x = -i[J_y,J_z]$ and hence with
+$J_+$. Since $J_zA|j,m\rangle = AJ_z|j,m\rangle = m\,A|j,m\rangle$ and the eigenvalue $m$ of $J_z$ is non-degenerate,
+$A|j,m\rangle = \lambda_m|j,m\rangle$. Then, for $m<j$,
+\begin{equation*}
+  AJ_+|j,m\rangle = a(m)\lambda_{m+1}|j,m+1\rangle \quad\text{and}\quad J_+A|j,m\rangle = \lambda_m a(m)|j,m+1\rangle ,
+\end{equation*}
+and $a(m)\neq0$ gives $\lambda_{m+1} = \lambda_m$. All $\lambda_m$ are equal: $A = \lambda\,1$. (This is Schur's lemma
+for the irreducible spin-$j$ representation: an operator that commutes with all rotations is a multiple of the
+identity.)
+
+\emph{(d) The constant.} Take the trace, using $\Tr(|\vn\rangle\langle\vn|) = \langle\vn|\vn\rangle = 1$ and
+\eqref{eq:area}: $\Tr A = \frac{2j+1}{4\pi}\int d\Omega = 2j+1$. Since $\Tr(\lambda1) = \lambda(2j+1)$, $\lambda = 1$.
+\end{proof}
+
+\paragraph{Direct check.} The matrix elements of $A$ can also be computed directly, which confirms the theorem. With
+\eqref{eq:coherent}, $\langle j,m|A|j,m'\rangle = \frac{2j+1}{4\pi}\int c_m c_{m'}^*\,d\phi\,dZ$. The $\phi$ integral
+is $\int_{-\pi}^{\pi}e^{-i(m-m')\phi}d\phi = 2\pi\,\delta_{mm'}$ ($m-m'$ is an integer). For $m = m'$ substitute $x =
+\cos^2\frac\theta2 = \frac{1+Z}{2}$, so $\sin^2\frac\theta2 = 1-x$ and $dZ = 2\,dx$:
+\begin{equation*}
+  \int_{-1}^{1}|c_m|^2dZ = \binom{2j}{j-m}\!\int_0^1\! x^{j+m}(1-x)^{j-m}\,2\,dx
+  = \frac{2\,(2j)!}{(j-m)!\,(j+m)!}\,\frac{(j+m)!\,(j-m)!}{(2j+1)!} = \frac{2}{2j+1},
+\end{equation*}
+where we used $\int_0^1x^a(1-x)^bdx = \frac{a!\,b!}{(a+b+1)!}$ (integrate by parts $b$ times: each step gives
+$\int_0^1x^a(1-x)^b dx = \frac{b}{a+1}\int_0^1x^{a+1}(1-x)^{b-1}dx$, and at the end $\int_0^1x^{a+b}dx =
+\frac{1}{a+b+1}$). Altogether $\langle j,m|A|j,m'\rangle = \frac{2j+1}{4\pi}\cdot2\pi\cdot\frac{2}{2j+1}\,\delta_{mm'} =
+\delta_{mm'}$.
+
+\subsection{Normalisation of \texorpdfstring{$Q$}{Q}}
+
+Take $\langle\psi|\cdot|\psi\rangle$ of \eqref{eq:resolution}: $\langle\psi|\theta,\phi\rangle\langle\theta,\phi|\psi
+\rangle = Q$, so
+\begin{equation}\label{eq:Q-norm}
+  \boxed{\frac{2j+1}{4\pi}\int Q(\theta,\phi)\,d\phi\,dZ = \langle\psi|\psi\rangle = 1 .}
+\end{equation}
+So $\frac{2j+1}{4\pi}Q$ is a probability density on the sphere with respect to $d\Omega$. A state ``occupies'' the
+area $4\pi/(2j+1)$ (a \emph{Planck cell}): the $2j+1$ orthogonal states $|j,m\rangle$ tile the area $4\pi$.
+
+\subsection{Worked examples}\label{sec:examples}
+
+\paragraph{(a) The state $|j,j\rangle$.} $\psi_m = \delta_{mj}$, so by \eqref{eq:Q} and \eqref{eq:coherent} with $m =
+j$ ($\binom{2j}{0} = 1$),
+\begin{equation}\label{eq:Q-jj}
+  Q(\theta,\phi) = \cos^{4j}\frac\theta2 = \Big(\frac{1+Z}{2}\Big)^{2j} .
+\end{equation}
+It does not depend on $\phi$, equals $1$ at the north pole $Z = 1$ and decays towards the south pole. Normalisation:
+$\frac{2j+1}{4\pi}\cdot2\pi\int_{-1}^{1}\big(\frac{1+Z}{2}\big)^{2j}dZ = \frac{2j+1}{2}\cdot\frac{2}{2j+1} = 1$, as
+\eqref{eq:Q-norm} requires (substitute $x = (1+Z)/2$: $\int_{-1}^{1}(\frac{1+Z}{2})^{2j}dZ = 2\int_0^1x^{2j}dx =
+\frac{2}{2j+1}$).
+
+\paragraph{(b) A coherent state.} For $|\psi\rangle = |\vn_0\rangle$, \eqref{eq:Q} is the overlap \eqref{eq:overlap}:
+\begin{equation}\label{eq:Q-coh}
+  Q(\vn) = \Big(\frac{1+\vn\cdot\vn_0}{2}\Big)^{2j} = \cos^{4j}\frac\gamma2,\qquad \cos\gamma = \vn\cdot\vn_0 .
+\end{equation}
+For small $\gamma$, $\ln\cos x = -\frac{x^2}{2} - \frac{x^4}{12} - \dots$, so $\ln Q = 4j\ln\cos\frac\gamma2 \approx
+-4j\,\frac{\gamma^2}{8} = -\frac{j\gamma^2}{2}$ and
+\begin{equation}\label{eq:Q-gauss}
+  Q \approx e^{-\gamma^2/(2\sigma^2)},\qquad \sigma = \frac{1}{\sqrt j}.
+\end{equation}
+The coherent state is a Gaussian blob of angular width $1/\sqrt j$ around $\vn_0$. The neglected term,
+$4j(\gamma/2)^4/12 = j\gamma^4/48$, is of order $1/(48j)$ for $\gamma\sim\sigma$. Example: $j = 50$ gives $\sigma =
+0.14$, and $Q$ drops to $1/2$ at $\gamma = \sqrt{2\ln2/j} = 0.17$. (The width $1/\sqrt j$ of $Q$ is $\sqrt2$ times the
+width $1/\sqrt{2j}$ of the state itself in \eqref{eq:coh-width}, because $Q$ is the overlap of two blobs.) Case (a) is
+\eqref{eq:Q-coh} with $\vn_0 = \hat{\bm z}$.
+
+\paragraph{(c) A Dicke state $|j,m_0\rangle$.} $\psi_m = \delta_{mm_0}$ and, with $x = \frac{1+Z}{2}$,
+$Q = |c_{m_0}|^2 = \binom{2j}{j-m_0}x^{j+m_0}(1-x)^{j-m_0}$, independent of $\phi$: a ring around the $z$ axis. Its
+maximum follows from $\frac{d}{dx}\ln Q = \frac{j+m_0}{x} - \frac{j-m_0}{1-x} = 0$, i.e.\ $x = \frac{j+m_0}{2j}$, or
+$Z = 2x-1 = m_0/j$: the ring sits at the classical height $J_z = m_0$.
+
+\subsection{Numerical evaluation}\label{sec:numerics}
+
+\paragraph{The equal-area grid.} \texttt{equal\_area\_grid} (\texttt{sphere\_mod}) builds $n_\theta\times n_\phi$ cell
+centres, uniform in $Z$ and $\phi$,
+\begin{equation}\label{eq:grid}
+  Z_i = -1 + \Big(i-\frac12\Big)\frac{2}{n_\theta},\quad \theta_i = \arccos Z_i,\qquad
+  \phi_l = -\pi + \Big(l-\frac12\Big)\frac{2\pi}{n_\phi},
+\end{equation}
+$i = 1,\dots,n_\theta$ (outer loop), $l = 1,\dots,n_\phi$ (inner loop). Each cell is a rectangle $\Delta Z\times\Delta
+\phi = \frac{2}{n_\theta}\times\frac{2\pi}{n_\phi}$ in the $(\phi,Z)$ plane, so by \eqref{eq:area} every cell has the same
+area on the sphere,
+\begin{equation}\label{eq:cell}
+  \Delta\Omega = \frac{4\pi}{n_\theta n_\phi} = \frac{4\pi}{N},\qquad N = n_\theta n_\phi .
+\end{equation}
+A grid uniform in $\theta$ would instead crowd its points near the poles.
+
+\paragraph{$Q$ as a complex dot product.} \texttt{husimi} (\texttt{src/quantum/husimi\_mod.f90}) evaluates
+\eqref{eq:Q} at every grid point. Fortran's \texttt{dot\_product(a, b)} for complex arrays is $\sum_i a_i^*b_i$, so with
+$a$ = the amplitudes \eqref{eq:coherent} and $b = \psi$ it is exactly $\langle\theta,\phi|\psi\rangle = \sum_m c_m^*
+\psi_m$; the loop body is \lstinline!q(i) = abs(dot_product(coherent_state(j, size(psi), theta(i), phi(i)), psi))**2!.
+The grid points are independent and are distributed over threads with OpenMP. The cost is $(2j+1)$ operations per point.
+
+\paragraph{The discrete normalisation check.} Replacing the integral in \eqref{eq:Q-norm} by the sum over cell centres
+(midpoint rule) with \eqref{eq:cell},
+\begin{equation}\label{eq:Q-norm-discrete}
+  \frac{2j+1}{4\pi}\int Q\,d\Omega \approx \frac{2j+1}{4\pi}\sum_{i,l}Q(\theta_i,\phi_l)\,\frac{4\pi}{N}
+  = (2j+1)\,\frac1N\sum_{i,l}Q(\theta_i,\phi_l) = (2j+1)\cdot\mathrm{mean}(Q) ,
+\end{equation}
+which is \texttt{husimi\_norm}: \lstinline!norm = (2*j+1)*sum(q)/size(q)!. It should be $1$. How accurate is it?
+Expanding \eqref{eq:Q}, $Q = \sum_{m,m'}c_m^*c_{m'}\psi_m\psi_{m'}^*$ contains $\phi$ only through $e^{i(m-m')\phi}$ with
+$K = m-m'\in[-2j,2j]$. On the grid \eqref{eq:grid}, with $\Delta = 2\pi/n_\phi$ and the geometric sum,
+\begin{equation*}
+  \sum_{l=1}^{n_\phi}e^{iK\phi_l} = e^{iK(-\pi+\Delta/2)}\sum_{l=0}^{n_\phi-1}\big(e^{iK\Delta}\big)^l
+  = e^{iK(-\pi+\Delta/2)}\,\frac{1-e^{2\pi iK}}{1-e^{iK\Delta}} = 0
+  \quad\text{unless } n_\phi \mid K .
+\end{equation*}
+($n_\phi\mid K$: $K$ is a multiple of $n_\phi$.)
+So for $n_\phi\ge2j+1$ only $K = 0$ survives and the $\phi$ sum is exact. What remains is $\sum_m|\psi_m|^2|c_m|^2$,
+a polynomial of degree $2j$ in $Z$, integrated with the midpoint rule, whose error decreases as $1/n_\theta^2$. For
+example, evaluating \eqref{eq:Q-norm-discrete} for a coherent state with $j = 7/2$, $\theta_0 = 1.1$, $\phi_0 = 0.7$
+gives $1.00103$ on a $20\times40$ grid and $1.00004$ on a $100\times200$ grid (the default of
+\texttt{config\_quantum.nml}); the ratio of the errors is $\approx 25 = (100/20)^2$.
+
+\paragraph{The log-binomial trick.} For large $j$ the factors in \eqref{eq:coherent} are individually out of the range
+of double precision (largest number $\approx1.8\times10^{308}$): $\binom{2j}{j}\approx 4^j/\sqrt{\pi j}$ is about
+$10^{360}$ for $j = 600$, while $\cos^{j+m}\frac\theta2\sin^{j-m}\frac\theta2$ is correspondingly tiny; their product
+$|c_m|\le1$ is harmless. \texttt{coherent\_state} therefore works with logarithms. It builds $\ln\binom{2j}{r}$, $r = j-m
+= i-1$, by the recursion $\binom{2j}{r} = \binom{2j}{r-1}\frac{2j-r+1}{r}$,
+\begin{equation}\label{eq:logbinom}
+  \ln\binom{2j}{r} = \ln\binom{2j}{r-1} + \ln\frac{2j-(r-1)}{r},\qquad \ln\binom{2j}{0} = 0,
+\end{equation}
+adds $(j+m)\ln\cos\frac\theta2 + (j-m)\ln\sin\frac\theta2$, and exponentiates only the sum:
+\begin{lstlisting}
+log_binom = 0.0_wp                       ! log binom(2j, r), r = j - m = i - 1
+do i = 1, n
+  r = i - 1
+  if (r > 0) log_binom = log_binom + log((2.0_wp*j - real(r - 1, wp))/real(r, wp))
+  log_amp = 0.5_wp*log_binom + log_power(cos(0.5_wp*theta), j + m(i)) &
+            + log_power(sin(0.5_wp*theta), j - m(i))
+  c(i) = exp(log_amp)*cmplx(cos(m(i)*phi), -sin(m(i)*phi), wp)
+end do
+\end{lstlisting}
+\texttt{log\_power(x, e)} returns $e\ln x$, with $0^0 = 1$ (returns $0$) and, for $x = 0$, $e>0$, a huge negative number
+so that \texttt{exp} gives $0$ (this happens at the poles, $\theta = 0$ or $\pi$). The phase $e^{-im\phi}$ is
+\lstinline!cmplx(cos(m*phi), -sin(m*phi))!.
+
+%=====================================================================
+\section{The Husimi function of the qubit chain}\label{sec:chain}
+%=====================================================================
+
+\subsection{Chain, collective spin and Dicke states}
+
+The chain has $n_q$ qubits. A computational basis state $|b\rangle$ is labelled by an integer $b = 0,\dots,2^{n_q}-1$:
+bit $i-1$ of $b$ is $1$ if qubit $i$ is up ($\sigma^z_i = +1$) and $0$ if it is down. The number of up qubits is
+$u = \mathrm{popcnt}(b)$, the number of set bits. The state is the vector $\psi(b) = \langle b|\psi\rangle$ of length
+$2^{n_q}$; no $2^{n_q}\times2^{n_q}$ matrix is ever stored. The collective spin is
+\begin{equation}\label{eq:S}
+  \vS = \frac12\sum_{i=1}^{n_q}\bm\sigma_i ,\qquad S_z|b\rangle = \Big(u - \frac{n_q}{2}\Big)|b\rangle .
+\end{equation}
+The chain is driven by \eqref{eq:H} with $\vJ\to\vS$, where $S_z^2$ is realised as the all-to-all Ising coupling
+$H_{zz} = \sum_{i,l}V_{il}\sigma^z_i\sigma^z_l$ with $V_{il} = \frac14$ ($i = l$ included), so that $H_{zz} = S_z^2$.
+
+By \cref{sec:two-j} with $n = n_q$, the symmetric subspace is spanned by the Dicke states
+\begin{equation}\label{eq:dicke}
+  |j,m\rangle = \binom{n_q}{u}^{-1/2}\sum_{b:\ \mathrm{popcnt}(b)=u}|b\rangle ,\qquad j = \frac{n_q}{2},\quad u = j+m ,
+\end{equation}
+and in this subspace $\vS$ is the spin-$j$ operator $\vJ$ of the kicked top. Each sum contains $\binom{n_q}{u}$ terms,
+which is why the prefactor normalises the state.
+
+\subsection{Projection onto the Dicke states: \texttt{dicke\_amplitudes}}
+
+The amplitude of $\psi$ on $|j,m\rangle$ follows from \eqref{eq:dicke} and $\langle b|\psi\rangle = \psi(b)$:
+\begin{equation}\label{eq:dicke-proj}
+  \boxed{c_m \equiv \langle j,m|\psi\rangle = \binom{n_q}{u}^{-1/2}\sum_{b:\ \mathrm{popcnt}(b)=u}\psi(b),\qquad u = j+m .}
+\end{equation}
+\texttt{dicke\_amplitudes} (\texttt{src/chain/chain\_state\_mod.f90}) computes it in one pass over the $2^{n_q}$
+amplitudes, accumulating $a(u) = \sum_{\mathrm{popcnt}(b)=u}\psi(b)$, then rescales:
+\begin{lstlisting}
+a = (0.0_wp, 0.0_wp)
+do b = 0, size(psi) - 1
+  a(popcnt(b)) = a(popcnt(b)) + psi(b)
+end do
+do u = 0, n_q
+  log_binom = log_gamma(real(n_q + 1, wp)) - log_gamma(real(u + 1, wp)) - log_gamma(real(n_q - u + 1, wp))
+  c(n_q - u + 1) = a(u)*exp(-0.5_wp*log_binom)
+end do
+\end{lstlisting}
+The binomial is evaluated with the log-Gamma function: $\Gamma(r+1) = r!$ for integer $r$, so
+\begin{equation}\label{eq:loggamma}
+  \ln\binom{n_q}{u} = \ln\Gamma(n_q+1) - \ln\Gamma(u+1) - \ln\Gamma(n_q-u+1),\qquad
+  \binom{n_q}{u}^{-1/2} = \exp\Big[-\frac12\ln\binom{n_q}{u}\Big],
+\end{equation}
+which never forms the large factorials themselves. The result is stored at index $i = n_q-u+1$, i.e.\ $m = j-(i-1) =
+j - n_q + u = u-j$, the ordering of \texttt{spin\_mod}, so every spin-$j$ routine can be applied to it.
+
+Let $P = \sum_m|j,m\rangle\langle j,m|$ be the projector onto the symmetric subspace. Then $P|\psi\rangle = \sum_m c_m
+|j,m\rangle$ and
+\begin{equation}\label{eq:sym-weight}
+  w \equiv \langle\psi|P|\psi\rangle = \sum_m|c_m|^2 \le 1 ,
+\end{equation}
+with $w = 1$ exactly when $\psi$ lies in the symmetric subspace.
+
+\subsection{Product coherent states are spin coherent states}
+
+The initial state of the chain is \texttt{product\_coherent\_state}: every qubit in the state \eqref{eq:qubit-coh}
+(\texttt{a\_up} $=\alpha$, \texttt{a\_dn} $=\beta$), and \lstinline!psi(b) = amp(popcnt(b))! with
+\lstinline!amp(u) = a_up**u*a_dn**(n_q - u)!. So $\psi(b) = \alpha^u\beta^{n_q-u}$, which depends on $b$ only through $u$. Insert this into \eqref{eq:dicke-proj}:
+the sum has $\binom{n_q}{u}$ equal terms, so
+\begin{equation*}
+  c_m = \binom{n_q}{u}^{-1/2}\binom{n_q}{u}\,\alpha^u\beta^{n_q-u} = \sqrt{\binom{n_q}{u}}\,\alpha^{j+m}\beta^{j-m}
+  = \sqrt{\binom{2j}{j-m}}\;\cos^{j+m}\!\frac\theta2\,\sin^{j-m}\!\frac\theta2\;e^{-im\phi},
+\end{equation*}
+using $n_q = 2j$, $\binom{2j}{j+m} = \binom{2j}{j-m}$ and the algebra of \cref{sec:amplitudes}. This is exactly
+\eqref{eq:coherent}:
+\begin{equation}\label{eq:prod-coh}
+  \texttt{dicke\_amplitudes}\big(\texttt{product\_coherent\_state}(n_q,\theta,\phi)\big) =
+  \texttt{coherent\_state}(n_q/2,\,n_q+1,\,\theta,\,\phi),
+\end{equation}
+with no phase difference, and $w = 1$ by \eqref{eq:coh-norm}. Numerically the two sides agree to machine precision
+($\sim10^{-16}$). This is no coincidence: \cref{sec:amplitudes} constructed the spin coherent state precisely as this
+product state.
+
+\subsection{Husimi function of the chain}
+
+Define the Husimi function of a chain state as the probability of finding it in the product coherent state,
+$Q(\theta,\phi) = |(\langle\vn|_1)^{\otimes n_q}|\psi\rangle|^2$. By \eqref{eq:prod-coh} the product coherent state
+lies in the symmetric subspace, $(\langle\vn|_1)^{\otimes n_q} = \langle\vn| = \langle\vn|P$, and therefore
+\begin{equation}\label{eq:Q-chain}
+  Q(\theta,\phi) = |\langle\vn|P|\psi\rangle|^2 = \Big|\sum_m c_m^*(\theta,\phi)\,\langle j,m|\psi\rangle\Big|^2 ,
+\end{equation}
+which is \eqref{eq:Q} with $\psi_m$ replaced by the Dicke amplitudes \eqref{eq:dicke-proj}. The code (\texttt{run\_chain}
+in \texttt{src/combined/chain\_run\_mod.f90}) does exactly this:
+\begin{lstlisting}
+call husimi(dicke_amplitudes(psi, cfg%n_q), j, hus_theta, hus_phi, q(:, l))
+\end{lstlisting}
+The $2^{n_q}$-dimensional state is reduced once to $n_q+1$ numbers (cost $2^{n_q}$), and each grid point then costs only
+$n_q+1$ operations, the same as for the spin-$j$ top.
+
+%=====================================================================
+\section{Symmetry caveat: leaving the symmetric subspace}\label{sec:caveat}
+%=====================================================================
+
+\paragraph{The dynamics keeps the symmetric subspace.} The kick $e^{-ipS_y} = \prod_ie^{-ip\sigma^y_i/2}$ and the
+coupling $e^{-i\frac{k}{2j}H_{zz}}$ with uniform $V_{il} = \frac14$ are unchanged when qubits are permuted. The
+symmetric subspace is the span of $|j,j\rangle$ and the states $S_-^r|j,j\rangle$, and these operators are functions of
+$\vS$, which maps it into itself; so $UP = PUP$, and since $U^\dagger$ is also a function of $\vS$, $PU = PUP$ too.
+Hence $[U,P] = 0$, and $w(t) = \langle\psi(t)|P|\psi(t)\rangle$ is conserved. The same holds for the backward step (time
+reversal with $k/(2j)\to2\pi-k/(2j)$, $p\to-p$). Starting from a product coherent state, $w = 1$ on the whole forward leg.
+
+\paragraph{A single-qubit perturbation leaks weight.} With \texttt{butterfly\_effect}, \texttt{rotate\_qubit} applies
+$e^{-i\vartheta\sigma^a_{i_{\rm flip}}/2}$ at $t_r$: a rotation of qubit $i_{\rm flip}$ about $a$ = \texttt{flip\_axis}
+by $\vartheta$ = \texttt{flip\_angle} (default $\pi$, the flip $\sigma^a_{i_{\rm flip}}$ up to the phase $-i$). It acts on
+one qubit only and does not commute with permutations, so the state acquires a component $(1-P)|\psi\rangle$ outside the
+symmetric subspace. That component has $\vS^2 < j(j+1)$ and lives in sectors of smaller total spin; it has no spin-$j$
+Dicke amplitudes. Afterwards $w$ is again conserved, so on the whole backward leg
+\begin{equation}
+  |\psi\rangle = \underbrace{P|\psi\rangle}_{\text{weight } w} + \underbrace{(1-P)|\psi\rangle}_{\text{weight } 1-w} .
+\end{equation}
+
+\paragraph{What the plotted $Q$ shows.} By \eqref{eq:Q-chain} $Q$ only sees $P|\psi\rangle$: the plotted Husimi
+function is that of the symmetric component alone. Its normalisation follows from \eqref{eq:resolution}, which in the
+chain reads $\frac{2j+1}{4\pi}\int|\vn\rangle\langle\vn|\,d\Omega = P$ (the identity of the symmetric subspace):
+\begin{equation}\label{eq:Q-chain-norm}
+  \frac{2j+1}{4\pi}\int Q\,d\Omega = \langle\psi|P|\psi\rangle = w = 1 - (\text{leaked weight}) .
+\end{equation}
+So \texttt{husimi\_norm} $<1$ measures the weight that has left the symmetric subspace. \texttt{run\_chain} also
+computes this weight directly from \eqref{eq:sym-weight}, without the grid error of \eqref{eq:Q-norm-discrete}:
+\begin{lstlisting}
+sym_dev = max(sym_dev, abs(1.0_wp - sum(abs(dicke_amplitudes(psi, cfg%n_q))**2)))
+\end{lstlisting}
+at the five Husimi snapshots $t = 0, t_r/2, t_r, 3t_r/2, 2t_r$ (integer division; the snapshot at $t_r$ is taken
+before the rotation). It is written to \texttt{summary.dat} as \texttt{max(1-symmetric\_weight)}, next to
+\texttt{husimi\_norm(0)} \dots\ \texttt{husimi\_norm(2t\_r)}. Without a flip $\texttt{sym\_dev}\approx0$; with a flip $\texttt{sym\_dev} = 1-w$ and
+$\texttt{husimi\_norm(2t\_r)}\approx 1-\texttt{sym\_dev}$.
+
+\paragraph{Worked example.} Let the state at $t_r$ be the all-up state $|j,j\rangle = |b = 2^{n_q}-1\rangle$ (close to
+what happens in the regular regime with $z$ polarisation) and flip qubit 1 about $x$ ($\vartheta = \pi$). The result is
+the single basis state with qubit 1 down, $u = n_q-1$. By \eqref{eq:dicke-proj} its only non-zero Dicke amplitude is $c_{j-1} =
+\binom{n_q}{n_q-1}^{-1/2} = 1/\sqrt{n_q}$, so $w = 1/n_q$ (for $n_q = 10$, $w = 0.1$): $90\%$ of the state has left
+the symmetric subspace. The plotted $Q = \frac{1}{n_q}Q_{|j,j-1\rangle}$ is, by example (c) of \cref{sec:examples}, a
+ring at $Z = (j-1)/j = 1-2/n_q$ with $\frac{2j+1}{4\pi}\int Q = 0.1$. A $z$ flip instead, $\sigma^z_1|\up\cdots\up\rangle =
+|\up\cdots\up\rangle$, leaves the state symmetric ($w = 1$): whether weight leaks depends on the state and on the axis.
+For general $\vartheta$, $e^{-i\vartheta\sigma^x_1/2} = \cos\frac\vartheta2 - i\sin\frac\vartheta2\,\sigma^x_1$ gives
+$\cos\frac\vartheta2|\up\cdots\up\rangle - i\sin\frac\vartheta2|\dn\up\cdots\up\rangle$, so the leaked weight is
+$1-w = (1-\frac1{n_q})\sin^2\frac\vartheta2$.
+
+%=====================================================================
+\section{Plotting}\label{sec:plotting}
+%=====================================================================
+
+\paragraph{The data file.} \texttt{write\_husimi} writes \texttt{husimi.dat}: in \texttt{src/quantum/quantum\_io\_mod.f90}
+the columns are \texttt{n phi Z X Y Q} with \texttt{n} the kick, in \texttt{src/combined/combined\_io\_mod.f90} they are
+\texttt{t phi Z X Y Q} with \texttt{t} $\in\{0,t_r/2,t_r,3t_r/2,2t_r\}$. One block of $N = n_\theta n_\phi$ lines is written per
+snapshot, in the order of \texttt{equal\_area\_grid} ($Z$ outer, $\phi$ inner), blocks separated by a blank line.
+$Z$, $X$ and $Y$ come from \texttt{spherical\_to\_cartesian} \eqref{eq:unit}. Fortran does all the computation; Python
+only reads and draws.
+
+\paragraph{Rendering.} \texttt{husimi()} in \texttt{docs/three\_regime/figures/plot\_three\_regimes.py} (and
+\texttt{quantum\_husimi()} in \texttt{docs/lecture\_note/figures/plot\_figures.py}) does
+\begin{lstlisting}[style=python]
+d = load(i, "chain/husimi.dat", data)      # np.loadtxt skips the blank lines
+b = d[d[:, 0] == t]                        # the block of snapshot t
+shape = (-1, n_phi)                        # n_phi = number of distinct phi in a block
+ax.pcolormesh(b[:, 1].reshape(shape), b[:, 2].reshape(shape), b[:, 5].reshape(shape),
+              shading="nearest", cmap="viridis", rasterized=True)
+\end{lstlisting}
+Because $\phi$ runs fastest, \lstinline[style=python]!reshape(-1, n_phi)! gives an $n_\theta\times n_\phi$ array whose
+row $i$ is the line $Z = Z_i$. With \lstinline[style=python]!shading="nearest"! every value is drawn as a rectangle
+centred on its grid point: these are exactly the equal-area cells \eqref{eq:cell}. \texttt{phase\_axes} sets
+$\phi\in[-\pi,\pi]$ and $Z\in[-1,1]$, the same axes as the classical Poincar\'e sections.
+
+\paragraph{Why $(\phi,Z)$ axes.}
+\begin{enumerate}
+  \item \emph{Areas are phase-space areas.} By \eqref{eq:area} a region of the plot has the same area as the
+  corresponding region of the sphere (the same Liouville measure); in $(\phi,\theta)$ axes the poles would be stretched.
+  \item \emph{Classical comparison.} $(\phi,Z)$ is the canonical pair of \cref{sec:motivation}. Classical phase portraits
+  are plotted in the same coordinates, so a Husimi plot can be laid directly over a portrait: a blob that sits on a
+  regular island, or that has spread over the chaotic sea, is seen at once.
+  \item \emph{Normalisation by eye.} Every pixel has the same weight, so \eqref{eq:Q-norm-discrete} is $(2j+1)$ times
+  the plain mean of the plotted values; the code checks it as \texttt{husimi\_norm}.
+\end{enumerate}
+
+\end{document}
