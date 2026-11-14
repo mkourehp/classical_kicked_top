@@ -31,10 +31,10 @@ contains
     complex(wp), allocatable :: psi0(:), psi(:)
     real(wp), allocatable :: obs(:,:), q(:,:)
     real(wp) :: sig(3, cfg%n_q), j, sym_dev
-    integer :: steps(3), t, l
+    integer :: steps(5), t, l
 
     j = 0.5_wp*cfg%n_q
-    steps = [0, cfg%t_r, 2*cfg%t_r]
+    steps = [0, cfg%t_r/2, cfg%t_r, 3*cfg%t_r/2, 2*cfg%t_r]
     allocate(obs(9 + 3*cfg%n_q, 0:2*cfg%t_r), q(size(hus_theta), size(steps)))
     psi0 = product_coherent_state(cfg%n_q, theta0, phi0)
     psi = psi0
@@ -64,10 +64,11 @@ contains
     call write_husimi(cfg, p, dir, steps, hus_theta, hus_phi, q)
     call write_summary(cfg, p, dir, &
       [character(len=24) :: 'F(t_r)', 'F(2t_r)', 'max|norm-1|', 'max|S^2-j(j+1)|', &
-       'max(1-symmetric_weight)', 'husimi_norm(0)', 'husimi_norm(t_r)', 'husimi_norm(2t_r)'], &
+       'max(1-symmetric_weight)', 'husimi_norm(0)', 'husimi_norm(t_r/2)', 'husimi_norm(t_r)', &
+       'husimi_norm(3t_r/2)', 'husimi_norm(2t_r)'], &
       [obs(1, cfg%t_r), obs(1, 2*cfg%t_r), maxval(abs(obs(2, :) - 1.0_wp)), &
        maxval(abs(obs(9, :) - j*(j + 1.0_wp))), sym_dev, &
-       husimi_norm(q(:, 1), j), husimi_norm(q(:, 2), j), husimi_norm(q(:, 3), j)])
+       (husimi_norm(q(:, l), j), l = 1, size(steps))])
 
     write(*, '(a,f0.4,a,f0.4,a,es10.3,a)') prog//': p = ', p, ', k = ', cfg%k, &
       ', F(2t_r) - 1 = ', obs(1, 2*cfg%t_r) - 1.0_wp, ' -> '//dir
