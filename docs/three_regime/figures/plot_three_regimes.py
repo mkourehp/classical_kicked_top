@@ -55,7 +55,7 @@ def sections():
 
 
 def husimi(data=DATA_DIR, name="three_regimes_husimi.pdf"):
-    """Figs. [fig:husimi], [fig:butterfly-husimi]: Husimi distribution of the chain at t = 0, t_r, 2 t_r."""
+    """Figs. [fig:husimi], [fig:butterfly-husimi]: Husimi distribution of the chain at t = 0, t_r/2, t_r, 3 t_r/2, 2 t_r."""
     rs = runs(data)
     d0 = load(1, "chain/husimi.dat", data)
     steps = np.unique(d0[:, 0]).astype(int)

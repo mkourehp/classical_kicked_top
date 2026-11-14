@@ -2,8 +2,8 @@
 
 All computation is done in Fortran (build/kicked_top_spin_chain); this script only reads
 the ASCII files in the output directory and plots them, one column per value of p:
-the Husimi snapshots of the qubit chain at t = 0, t_r and 2 t_r, the fidelity, the
-total spin and the single-qubit spins.
+the Husimi snapshots of the qubit chain at t = 0, t_r/2, t_r, 3 t_r/2 and
+2 t_r, the fidelity, the total spin and the single-qubit spins.
 """
 
 import argparse
