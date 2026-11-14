@@ -24,7 +24,8 @@
   t_r = 30                 ! forward steps before the time reversal (then t_r backward steps)
   butterfly_effect = .true.  ! flip qubit i_flip at t_r, before the backward leg
   i_flip = 1               ! index (1 .. n_q) of the flipped qubit
-  flip_axis = 'x'          ! the flip is sigma^a on qubit i_flip, a = 'x', 'y' or 'z'
+  flip_axis = 'x'          ! rotation axis a = 'x', 'y' or 'z' of qubit i_flip
+  flip_angle = 3.141592653589793 ! rotation angle: exp(-i flip_angle/2 sigma^a); pi = full flip sigma^a
 /
 
 &husimi

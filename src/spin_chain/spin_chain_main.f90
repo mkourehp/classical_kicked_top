@@ -1,7 +1,8 @@
 ! Driver of the qubit chain alone (make spin_chain): for every rotation angle p
 ! in the config, n_q spins 1/2 with all-to-all zz couplings V_il = 1/4 are
-! evolved t_r steps forward, then (with butterfly_effect) sigma^a, a = flip_axis,
-! acts on qubit i_flip, then t_r steps backward (coupling 2 pi - k/(2j), kick -p).
+! evolved t_r steps forward, then (with butterfly_effect) qubit i_flip is rotated
+! about a = flip_axis by flip_angle (exp(-i flip_angle/2 sigma^a), pi = flip
+! sigma^a), then t_r steps backward (coupling 2 pi - k/(2j), kick -p).
 ! Same namelist and chain output as kicked_top_combined, without the classical part.
 ! Usage: kicked_top_spin_chain [namelist file]   (default config_spin_chain.nml)
 program kicked_top_spin_chain

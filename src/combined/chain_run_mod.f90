@@ -1,7 +1,8 @@
 ! Time evolution of the qubit chain for one rotation angle p, shared by
 ! kicked_top_combined (make combined) and kicked_top_spin_chain (make spin_chain):
-! t_r forward steps U, then (with butterfly_effect) sigma^a on qubit i_flip,
-! a = flip_axis, then t_r backward steps (coupling 2 pi - k/(2j), kick -p).
+! t_r forward steps U, then (with butterfly_effect) a rotation of qubit i_flip
+! about a = flip_axis by flip_angle (pi = flip sigma^a), then t_r backward
+! steps (coupling 2 pi - k/(2j), kick -p).
 ! Writes the files of combined_io_mod in dir.
 module chain_run_mod
   use kinds_mod, only: wp
@@ -10,7 +11,7 @@ module chain_run_mod
   use combined_config_mod, only: rconfig_t
   use combined_io_mod, only: write_chain, write_husimi, write_summary
   use chain_state_mod, only: product_coherent_state, dicke_amplitudes
-  use chain_floquet_mod, only: flip_qubit, forward_step, backward_step
+  use chain_floquet_mod, only: rotate_qubit, forward_step, backward_step
   use chain_observables_mod, only: fidelity, site_spins, total_spin
   implicit none
   private
@@ -42,7 +43,7 @@ contains
 
     do t = 0, 2*cfg%t_r
       if (t >= 1 .and. t <= cfg%t_r) call forward_step(psi, cfg%n_q, p, cfg%k, e_zz)
-      if (t == cfg%t_r + 1 .and. cfg%butterfly_effect) call flip_qubit(psi, cfg%i_flip, cfg%flip_axis)
+      if (t == cfg%t_r + 1 .and. cfg%butterfly_effect) call rotate_qubit(psi, cfg%i_flip, cfg%flip_axis, cfg%flip_angle)
       if (t > cfg%t_r) call backward_step(psi, cfg%n_q, p, cfg%k, e_zz)
 
       sig = site_spins(psi, cfg%n_q)
